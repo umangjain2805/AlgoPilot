@@ -13,6 +13,7 @@ import Login from './pages/Login.jsx'
 import Register from './pages/Register.jsx'
 import Dashboard from './pages/Dashboard.jsx'
 import GuestDashboard from './pages/GuestDashboard.jsx'
+import LeetCodeConnect from './pages/LeetCodeConnect.jsx'
 import NotFound from './pages/NotFound.jsx'
 import GuestEntry from './components/GuestEntry.jsx'
 
@@ -44,6 +45,7 @@ function App() {
         <Route element={<ProtectedRoute />}>
           <Route element={<DashboardLayout />}>
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/leetcode" element={<LeetCodeConnect />} />
           </Route>
         </Route>
 

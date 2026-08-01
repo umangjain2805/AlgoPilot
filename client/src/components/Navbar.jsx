@@ -48,6 +48,11 @@ const Navbar = () => {
               Dashboard
             </NavLink>
           )}
+          {isAuthenticated && !isGuest && (
+            <NavLink to="/leetcode" className={navLinkClass}>
+              LeetCode
+            </NavLink>
+          )}
         </div>
 
         <div className="hidden items-center gap-3 md:flex">
@@ -118,6 +123,11 @@ const Navbar = () => {
                 onClick={() => setMobileOpen(false)}
               >
                 Dashboard
+              </NavLink>
+            )}
+            {isAuthenticated && !isGuest && (
+              <NavLink to="/leetcode" className={navLinkClass} onClick={() => setMobileOpen(false)}>
+                LeetCode
               </NavLink>
             )}
           </div>

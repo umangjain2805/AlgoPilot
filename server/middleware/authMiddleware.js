@@ -29,3 +29,11 @@ export const authorize = (...roles) => (req, _res, next) => {
   }
   next()
 }
+
+// Blocks guest users from routes that require a real account.
+export const disallowGuest = (req, _res, next) => {
+  if (req.user?.isGuest) {
+    return next(new ApiError(403, 'Guest users cannot perform this action. Please create an account.'))
+  }
+  next()
+}

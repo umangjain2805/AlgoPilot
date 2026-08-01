@@ -10,6 +10,7 @@ import { requestLogger } from './middleware/requestLogger.js'
 import { notFoundHandler } from './middleware/notFoundHandler.js'
 import { errorMiddleware } from './middleware/errorMiddleware.js'
 import authRoutes from './routes/authRoutes.js'
+import leetcodeRoutes from './routes/leetcodeRoutes.js'
 
 const app = express()
 
@@ -63,6 +64,7 @@ app.get('/api/health', (_req, res) => {
 
 // ---- Routes ----
 app.use('/api/auth', authRoutes)
+app.use('/api/leetcode', leetcodeRoutes)
 
 // ---- 404 & error handling ----
 app.use(notFoundHandler)
