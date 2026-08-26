@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Settings as SettingsIcon } from 'lucide-react'
-import { useAuth } from '../../hooks/useAuth.js'
-import Button from '../../components/Button.jsx'
-import Avatar from '../../components/Avatar.jsx'
+import { useAuth } from '../hooks/useAuth.js'
+import Button from '../components/Button.jsx'
+import Avatar from '../components/Avatar.jsx'
 
 const Settings = () => {
   const { user, isGuest, logout } = useAuth()

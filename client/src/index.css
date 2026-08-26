@@ -21,6 +21,17 @@
   --color-accent-500: #14b8a6;
   --color-accent-600: #0d9488;
 
+  --color-success-50: #f0fdf4;
+  --color-success-100: #dcfce7;
+  --color-success-200: #bbf7d0;
+  --color-success-300: #86efac;
+  --color-success-400: #4ade80;
+  --color-success-500: #22c55e;
+  --color-success-600: #16a34a;
+  --color-success-700: #15803d;
+  --color-success-800: #166534;
+  --color-success-900: #14532d;
+
   --color-ink-50: #f8fafc;
   --color-ink-100: #f1f5f9;
   --color-ink-200: #e2e8f0;
@@ -143,6 +154,10 @@
 
   .btn-ghost {
     @apply inline-flex items-center justify-center gap-2 rounded-xl font-semibold transition-all duration-200 cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 text-ink-600 hover:text-ink-900 hover:bg-ink-100/80 dark:text-ink-300 dark:hover:text-white dark:hover:bg-ink-800/60;
+  }
+
+  .btn-success {
+    @apply inline-flex items-center justify-center gap-2 rounded-full font-semibold transition-all duration-200 cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 text-white bg-gradient-to-r from-success-600 to-success-500 hover:from-success-700 hover:to-success-600 shadow-lg shadow-success-500/30 hover:shadow-success-600/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-success-400 focus-visible:ring-offset-2;
   }
 
   .btn-danger {

@@ -13,7 +13,7 @@ import {
   X,
 } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth.js'
-import Avatar from '../Avatar.jsx'
+import Avatar from './Avatar.jsx'
 
 const navItems = [
   { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },

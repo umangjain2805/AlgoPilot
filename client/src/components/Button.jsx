@@ -6,6 +6,7 @@ const variantClasses = {
   ghost: 'btn-ghost',
   danger: 'btn-danger',
   google: 'btn-google',
+  success: 'btn-success',
 }
 
 const sizeClasses = {
