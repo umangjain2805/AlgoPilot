@@ -1,15 +1,11 @@
 import express from 'express'
 import helmet from 'helmet'
 import cors from 'cors'
-import cookieParser from 'cookie-parser'
 import rateLimit from 'express-rate-limit'
-import { mongoSanitize } from './middleware/mongoSanitize.js'
-
 import { env } from './config/env.js'
 import { requestLogger } from './middleware/requestLogger.js'
 import { notFoundHandler } from './middleware/notFoundHandler.js'
 import { errorMiddleware } from './middleware/errorMiddleware.js'
-import authRoutes from './routes/authRoutes.js'
 import leetcodeRoutes from './routes/leetcodeRoutes.js'
 
 const app = express()
@@ -24,14 +20,9 @@ app.use(
   }),
 )
 
-app.use(cookieParser(env.cookieSecret))
-
 // ---- Body parsing ----
 app.use(express.json({ limit: '10kb' }))
 app.use(express.urlencoded({ extended: true, limit: '10kb' }))
-
-// ---- NoSQL injection sanitization ----
-app.use(mongoSanitize())
 
 // ---- Request logging ----
 app.use(requestLogger)
@@ -63,7 +54,6 @@ app.get('/api/health', (_req, res) => {
 })
 
 // ---- Routes ----
-app.use('/api/auth', authRoutes)
 app.use('/api/leetcode', leetcodeRoutes)
 
 // ---- 404 & error handling ----

@@ -8,6 +8,3 @@ export class ApiError extends Error {
     Error.captureStackTrace(this, this.constructor)
   }
 }
-
-export const createError = (statusCode, message, errors = []) =>
-  new ApiError(statusCode, message, errors)

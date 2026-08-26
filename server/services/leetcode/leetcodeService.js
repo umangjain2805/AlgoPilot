@@ -1,4 +1,3 @@
-import { LeetCodeProfile } from '../../models/LeetCodeProfile.js'
 import { ApiError } from '../../utils/ApiError.js'
 import { leetcodeRequest, fetchAcSubmissionSlugs } from './client.js'
 import { USER_PROFILE_QUERY, CONTEST_RANKING_QUERY, RECENT_SUBMISSIONS_QUERY } from './queries.js'
@@ -56,66 +55,4 @@ export const fetchLeetCodeProfile = async (username) => {
     }),
     solvedSlugs: uniqueSlugs(solvedSlugs),
   }
-}
-
-// Connects a LeetCode username to the user and stores the fetched profile.
-export const connectLeetCodeProfile = async (userId, usernameInput) => {
-  const username = validateUsername(usernameInput)
-
-  const existing = await LeetCodeProfile.findOne({ userId })
-  if (existing) {
-    throw new ApiError(409, 'A LeetCode profile is already connected. Use Sync to refresh it.')
-  }
-
-  const data = await fetchLeetCodeProfile(username)
-
-  const profile = await LeetCodeProfile.create({
-    userId,
-    ...data,
-    lastSyncedAt: new Date(),
-  })
-
-  return profile
-}
-
-// Returns the stored profile for a user.
-export const getLeetCodeProfile = async (userId) => {
-  const profile = await LeetCodeProfile.findOne({ userId })
-  if (!profile) {
-    throw new ApiError(404, 'No LeetCode profile is connected yet')
-  }
-  return profile
-}
-
-// Refetches the latest LeetCode data and updates only the changed fields.
-export const syncLeetCodeProfile = async (userId) => {
-  const existing = await LeetCodeProfile.findOne({ userId })
-  if (!existing) {
-    throw new ApiError(404, 'No LeetCode profile is connected yet')
-  }
-
-  const latest = await fetchLeetCodeProfile(existing.leetcodeUsername)
-
-  let changedFields = 0
-  for (const [key, value] of Object.entries(latest)) {
-    const previous = existing[key]
-    if (JSON.stringify(previous) !== JSON.stringify(value)) {
-      existing[key] = value
-      changedFields += 1
-    }
-  }
-
-  existing.lastSyncedAt = new Date()
-  await existing.save()
-
-  return { profile: existing, changedFields }
-}
-
-// Removes the stored profile for a user.
-export const disconnectLeetCodeProfile = async (userId) => {
-  const deleted = await LeetCodeProfile.findOneAndDelete({ userId })
-  if (!deleted) {
-    throw new ApiError(404, 'No LeetCode profile is connected yet')
-  }
-  return true
 }

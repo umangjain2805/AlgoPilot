@@ -1,16 +1,10 @@
 import { Router } from 'express'
-import { connect, getProfile, sync, disconnect } from '../controllers/leetcodeController.js'
-import { connectValidator } from '../validators/leetcodeValidator.js'
-import { authenticate, disallowGuest } from '../middleware/authMiddleware.js'
+import { fetchProfile } from '../controllers/leetcodeController.js'
 
 const router = Router()
 
-// All LeetCode routes require an authenticated, non-guest user.
-router.use(authenticate, disallowGuest)
-
-router.post('/connect', connectValidator, connect)
-router.get('/profile', getProfile)
-router.post('/sync', sync)
-router.delete('/disconnect', disconnect)
+// Public — fetches a profile by username without requiring an account.
+// Used by anonymous ("local mode") sessions whose data lives in localStorage.
+router.post('/fetch', fetchProfile)
 
 export default router
