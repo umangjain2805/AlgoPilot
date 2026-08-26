@@ -81,3 +81,6 @@ export const normalizeProfile = ({ matchedUser, contestRanking, recentSubmission
     })),
   }
 }
+
+// Dedupes an already-flat slug list.
+export const uniqueSlugs = (slugs = []) => [...new Set(slugs.filter(Boolean))]

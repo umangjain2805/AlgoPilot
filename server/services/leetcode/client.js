@@ -154,3 +154,38 @@ const graphqlRequest = async ({ query, variables = {}, username }) => {
 
 export const leetcodeRequest = (query, variables, username) =>
   graphqlRequest({ query, variables, username })
+
+// Fetches the full list of accepted submissions from LeetCode's public
+// /api/{username}/acSubmission endpoint. Returns [{ titleSlug, ... }, ...].
+// Best-effort: on transport errors returns an empty array and lets the
+// caller continue without solved slugs (recommendations will be less
+// personalised but the request still completes).
+export const fetchAcSubmissionSlugs = async (username) => {
+  const url = `${LEETCODE_URL}/api/${username}/acSubmission/`
+
+  try {
+    const { status, body } = await curlRequest([
+      '-s',
+      '-H',
+      `User-Agent: ${USER_AGENT}`,
+      '-H',
+      'Accept: application/json',
+      url,
+    ])
+
+    if (status !== 200) return []
+
+    let json
+    try {
+      json = JSON.parse(body)
+    } catch {
+      return []
+    }
+
+    const list = Array.isArray(json?.acSubmissionList) ? json.acSubmissionList : []
+    const slugs = list.map((entry) => entry?.titleSlug).filter(Boolean)
+    return [...new Set(slugs)]
+  } catch {
+    return []
+  }
+}

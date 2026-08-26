@@ -1,8 +1,8 @@
 import { LeetCodeProfile } from '../../models/LeetCodeProfile.js'
 import { ApiError } from '../../utils/ApiError.js'
-import { leetcodeRequest } from './client.js'
+import { leetcodeRequest, fetchAcSubmissionSlugs } from './client.js'
 import { USER_PROFILE_QUERY, CONTEST_RANKING_QUERY, RECENT_SUBMISSIONS_QUERY } from './queries.js'
-import { normalizeProfile } from './normalizer.js'
+import { normalizeProfile, uniqueSlugs } from './normalizer.js'
 
 const RECENT_SUBMISSIONS_LIMIT = 10
 
@@ -27,11 +27,12 @@ export const validateUsername = (username) => {
   return trimmed
 }
 
-// Fetches and normalizes the public LeetCode data for a username.
+// Fetches and normalizes the public LeetCode data for a username, including
+// the full list of solved problem slugs from the public acSubmission endpoint.
 export const fetchLeetCodeProfile = async (username) => {
   const year = new Date().getFullYear()
 
-  const [profileData, contestData, recentData] = await Promise.all([
+  const [profileData, contestData, recentData, solvedSlugs] = await Promise.all([
     leetcodeRequest(
       USER_PROFILE_QUERY,
       { username, year },
@@ -39,6 +40,7 @@ export const fetchLeetCodeProfile = async (username) => {
     ),
     leetcodeRequest(CONTEST_RANKING_QUERY, { username }, username),
     leetcodeRequest(RECENT_SUBMISSIONS_QUERY, { username, limit: RECENT_SUBMISSIONS_LIMIT }, username),
+    fetchAcSubmissionSlugs(username),
   ])
 
   const matchedUser = profileData.matchedUser
@@ -46,11 +48,14 @@ export const fetchLeetCodeProfile = async (username) => {
     throw new ApiError(404, `LeetCode user "${username}" was not found`)
   }
 
-  return normalizeProfile({
-    matchedUser,
-    contestRanking: contestData.userContestRanking,
-    recentSubmissions: recentData.recentSubmissionList,
-  })
+  return {
+    ...normalizeProfile({
+      matchedUser,
+      contestRanking: contestData.userContestRanking,
+      recentSubmissions: recentData.recentSubmissionList,
+    }),
+    solvedSlugs: uniqueSlugs(solvedSlugs),
+  }
 }
 
 // Connects a LeetCode username to the user and stores the fetched profile.

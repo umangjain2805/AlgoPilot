@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "apiKeyHelper": "cmd /c echo fw_7Aj1Kh5Ef3tx4bYCrUmTtg",
+  "env": {
+    "ANTHROPIC_BASE_URL": "https://api.fireworks.ai/inference",
+    "ANTHROPIC_CUSTOM_HEADERS": "Authorization: Bearer fw_7Aj1Kh5Ef3tx4bYCrUmTtg",
+    "ANTHROPIC_API_KEY": "unused",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "accounts/fireworks/models/deepseek-v4-pro-0813",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "accounts/fireworks/models/deepseek-v4-pro-0813",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "accounts/fireworks/models/deepseek-v4-pro-0813"
+  },
+  "model": "accounts/fireworks/models/deepseek-v4-pro-0813"
+}

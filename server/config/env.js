@@ -20,6 +20,7 @@ export const env = {
   googleClientId: process.env.GOOGLE_CLIENT_ID,
   googleClientSecret: process.env.GOOGLE_CLIENT_SECRET,
   cookieSecret: process.env.COOKIE_SECRET,
+  geminiApiKey: process.env.GEMINI_API_KEY || '',
 }
 
 export const isProduction = env.nodeEnv === 'production'

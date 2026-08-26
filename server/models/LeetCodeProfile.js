@@ -62,6 +62,25 @@ const leetCodeProfileSchema = new mongoose.Schema(
     mediumSolved: { type: Number, default: 0 },
     hardSolved: { type: Number, default: 0 },
     totalSolved: { type: Number, default: 0 },
+    solvedSlugs: { type: [String], default: [] },
+    lastRecommendations: {
+      count: { type: Number, default: 0 },
+      items: {
+        type: [
+          {
+            slug: { type: String, default: '' },
+            title: { type: String, default: '' },
+            difficulty: { type: String, default: '' },
+            tags: { type: [String], default: [] },
+            url: { type: String, default: '' },
+            rationale: { type: String, default: '' },
+          },
+        ],
+        default: [],
+      },
+      source: { type: String, enum: ['gemini', 'heuristic'], default: 'heuristic' },
+      generatedAt: { type: Date, default: null },
+    },
     acceptanceRate: { type: Number, default: 0 },
     contributionPoints: { type: Number, default: 0 },
     heatmap: { type: mongoose.Schema.Types.Mixed, default: {} },
