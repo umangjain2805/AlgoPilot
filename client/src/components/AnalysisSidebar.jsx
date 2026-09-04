@@ -2,6 +2,20 @@ import { Bot, Lightbulb, Sparkles, Target } from 'lucide-react'
 import { PROBLEMS } from '../lib/leetcode.js'
 import ProgressBar from './ProgressBar.jsx'
 
+const timeAgo = (timestamp) => {
+  const seconds = Math.floor((Date.now() - Number(timestamp) * 1000) / 1000)
+  if (seconds < 60) return 'just now'
+  const minutes = Math.floor(seconds / 60)
+  if (minutes < 60) return `${minutes}m ago`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${hours}h ago`
+  const days = Math.floor(hours / 24)
+  if (days < 30) return `${days}d ago`
+  const months = Math.floor(days / 30)
+  if (months < 12) return `${months}mo ago`
+  return `${Math.floor(months / 12)}y ago`
+}
+
 const DIFFICULTY_BAR = {
   Easy: 'bg-emerald-500',
   Medium: 'bg-amber-500',
@@ -55,6 +69,21 @@ export default function AnalysisSidebar({ analysis, error, onReset }) {
                 </p>
               </div>
             </div>
+
+            {analysis.profile.badges?.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {analysis.profile.badges.map((badge) => (
+                  <span
+                    key={badge.badgeId || badge.displayName}
+                    title={badge.displayName}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                  >
+                    {badge.icon && <img src={badge.icon} alt="" className="h-4 w-4 rounded-sm" />}
+                    {badge.displayName}
+                  </span>
+                ))}
+              </div>
+            )}
 
             {/* Solved overview */}
             <div>
@@ -154,10 +183,38 @@ export default function AnalysisSidebar({ analysis, error, onReset }) {
               </ul>
             </div>
 
+            {analysis.profile.recentSubmissions?.length > 0 && (
+              <div>
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  Recent activity
+                </h3>
+                <ul className="mt-3 space-y-2">
+                  {analysis.profile.recentSubmissions.slice(0, 5).map((sub) => (
+                    <li
+                      key={sub.submissionId || sub.titleSlug}
+                      className="flex items-center justify-between gap-2 text-sm"
+                    >
+                      <a
+                        href={`https://leetcode.com/problems/${sub.titleSlug}/`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="truncate text-slate-700 hover:text-indigo-600 dark:text-slate-200 dark:hover:text-indigo-400"
+                      >
+                        {sub.title}
+                      </a>
+                      <span className="shrink-0 text-xs text-slate-400 dark:text-slate-500">
+                        {timeAgo(sub.timestamp)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
             <button
               type="button"
               onClick={onReset}
-              className="w-full rounded-xl border border-slate-200 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+              className="w-full rounded-xl border border-slate-200 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
             >
               Load a different profile
             </button>

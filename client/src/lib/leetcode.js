@@ -6,6 +6,10 @@ const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 
 const DIFFICULTY_ORDER = { Easy: 0, Medium: 1, Hard: 2 }
 
+// Important-list problems that are free to solve. Paid-only problems are never
+// offered as "new practice" (the user couldn't solve them for free).
+const FREE_PROBLEMS = problems.filter((p) => !p.paidOnly)
+
 // Accepts a LeetCode profile URL (`https://leetcode.com/u/<username>/`,
 // `https://leetcode.com/<username>/`, or a scheme-less `leetcode.com/...`), or a
 // bare username, and returns the username.
@@ -143,10 +147,29 @@ export function buildAnalysis(profile) {
   }
 }
 
-// Generates a practice plan of `total` questions split into `solvedCount`
-// revision problems and the remainder new (unsolved) problems. Problems are
-// drawn from the user's weakest topics first, then anything else.
-export function buildPlan(analysis, total, solvedCount) {
+// Works out how many of `total` should be revision (already solved) versus
+// fresh (unsolved). Targets ~40% revision by default but clamps to what the
+// user has actually solved / still has left unsolved in the curated set.
+export function deriveSolvedCount(analysis, total) {
+  const solvedAvail = analysis.datasetSolved
+  const freshAvail = FREE_PROBLEMS.filter((p) => !analysis.solvedSet.has(p.titleSlug)).length
+
+  let solved = Math.round(total * 0.4)
+  // Can't revise more than the user has solved in the tracked set…
+  solved = Math.min(solved, solvedAvail)
+  // …and can't ask for more fresh problems than are actually left unsolved.
+  solved = Math.max(solved, total - freshAvail)
+
+  return Math.min(Math.max(0, solved), total)
+}
+
+// Generates a practice plan of `total` questions — a mix of solved (revision)
+// and unsolved (fresh) problems, all drawn from the curated important list.
+// The solved/unsolved split is derived automatically. Problems are drawn from
+// the user's weakest topics first, then anything else.
+export function buildPlan(analysis, total) {
+  const solvedCount = deriveSolvedCount(analysis, total)
+
   const weakNames = new Set(analysis.weakTopics.map((t) => t.name))
   const weakScore = (p) => (p.tags?.some((tag) => weakNames.has(tag)) ? 1 : 0)
 
@@ -156,12 +179,13 @@ export function buildPlan(analysis, total, solvedCount) {
     .map((p) => ({ ...p, tags: p.tags || [] }))
     .sort((a, b) => weakScore(b) - weakScore(a) || rank(b) - rank(a))
 
-  const freshPool = PROBLEMS.filter((p) => !analysis.solvedSet.has(p.titleSlug))
+  // Only offer free problems as new practice.
+  const freshPool = FREE_PROBLEMS.filter((p) => !analysis.solvedSet.has(p.titleSlug))
     .map((p) => ({ ...p, tags: p.tags || [] }))
     .sort((a, b) => weakScore(b) - weakScore(a) || rank(a) - rank(b))
 
   const revision = solvedPool.slice(0, solvedCount)
   const fresh = freshPool.slice(0, Math.max(0, total - solvedCount))
 
-  return { revision, fresh }
+  return { revision, fresh, solvedCount }
 }

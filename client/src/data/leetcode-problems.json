@@ -388,5 +388,5 @@
   {"id":387,"titleSlug":"first-unique-character-in-a-string","title":"First Unique Character in a String","difficulty":"Easy","tags":["Hash Table","String","Queue","Counting"],"paidOnly":false,"url":"https://leetcode.com/problems/first-unique-character-in-a-string/"},
   {"id":388,"titleSlug":"longest-absolute-file-path","title":"Longest Absolute File Path","difficulty":"Medium","tags":["String","Stack","Depth-First Search"],"paidOnly":false,"url":"https://leetcode.com/problems/longest-absolute-file-path/"},
   {"id":389,"titleSlug":"find-the-difference","title":"Find the Difference","difficulty":"Easy","tags":["Hash Table","String","Bit Manipulation","Sorting"],"paidOnly":false,"url":"https://leetcode.com/problems/find-the-difference/"},
-  {"id":390,"titleSlug":"elimination-game","title":"Elimination Game","difficulty":"Medium","tags":["Math","Recursion"],"paidOnly":false,"url":"leetcode.com/problems/elimination-game/","url":"https://leetcode.com/problems/elimination-game/"}
+  {"id":390,"titleSlug":"elimination-game","title":"Elimination Game","difficulty":"Medium","tags":["Math","Recursion"],"paidOnly":false,"url":"https://leetcode.com/problems/elimination-game/"}
 ]

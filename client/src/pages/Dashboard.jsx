@@ -3,6 +3,7 @@ import {
   Flame,
   Loader2,
   Moon,
+  RefreshCw,
   Search,
   Sparkles,
   Sun,
@@ -15,6 +16,7 @@ import DashboardLayout from '../layouts/DashboardLayout.jsx'
 import AnalysisSidebar from '../components/AnalysisSidebar.jsx'
 import Stat from '../components/Stat.jsx'
 import QuestionCard from '../components/QuestionCard.jsx'
+import Heatmap from '../components/Heatmap.jsx'
 
 export default function Dashboard() {
   const { dark, toggleTheme } = useTheme()
@@ -23,15 +25,23 @@ export default function Dashboard() {
     setInput,
     loading,
     error,
+    savedAt,
     total,
     setTotal,
-    setSolvedCount,
     analysis,
-    safeSolved,
     plan,
     handleSubmit,
+    sync,
     reset,
+    runFetch,
   } = useLeetCodeProfile()
+
+  const EXAMPLE_USERNAME = 'tourist'
+
+  const handleExample = () => {
+    setInput(EXAMPLE_USERNAME)
+    runFetch(EXAMPLE_USERNAME)
+  }
 
   return (
     <DashboardLayout
@@ -48,11 +58,27 @@ export default function Dashboard() {
               Paste your profile URL to see how many you&apos;ve solved, your weak points, and a
               personalised plan.
             </p>
+            {savedAt && (
+              <div className="mt-1.5 flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500">
+                <span>
+                  Last fetched {new Date(savedAt).toLocaleString()} · saved on this device
+                </span>
+                <button
+                  type="button"
+                  onClick={sync}
+                  disabled={loading}
+                  className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 font-medium text-indigo-600 transition hover:bg-indigo-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/50 disabled:cursor-not-allowed disabled:opacity-50 dark:text-indigo-400 dark:hover:bg-indigo-500/10"
+                >
+                  {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
+                  Sync
+                </button>
+              </div>
+            )}
           </div>
           <button
             type="button"
             onClick={toggleTheme}
-            className="hidden h-10 w-10 shrink-0 place-items-center rounded-lg border border-slate-200 text-slate-600 transition hover:bg-slate-50 lg:grid dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+            className="hidden h-10 w-10 shrink-0 place-items-center rounded-lg border border-slate-200 text-slate-600 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/50 lg:grid dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
             aria-label="Toggle theme"
           >
             {dark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
@@ -72,13 +98,14 @@ export default function Dashboard() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="https://leetcode.com/u/your_username"
-                className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-4 text-slate-900 placeholder:text-slate-400 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/30 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500"
+                disabled={loading}
+                className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-4 text-slate-900 placeholder:text-slate-400 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/30 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500"
               />
             </div>
             <button
               type="submit"
               disabled={loading}
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-6 font-semibold text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-6 font-semibold text-white transition hover:bg-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/50 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Search className="h-5 w-5" />}
               {loading ? 'Fetching…' : 'Fetch'}
@@ -97,6 +124,14 @@ export default function Dashboard() {
               Enter your LeetCode profile URL above. You can also paste just your username — no
               account or login needed. Everything is analysed here in your browser.
             </p>
+            <button
+              type="button"
+              onClick={handleExample}
+              className="mt-5 inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-4 font-semibold text-indigo-700 transition hover:bg-indigo-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/50 dark:border-indigo-500/30 dark:bg-indigo-500/10 dark:text-indigo-300 dark:hover:bg-indigo-500/20"
+            >
+              <Sparkles className="h-4 w-4" />
+              Try an example profile
+            </button>
           </div>
         )}
 
@@ -107,7 +142,7 @@ export default function Dashboard() {
               <h2 className="font-display mb-4 text-lg font-bold text-slate-900 dark:text-white">
                 Your snapshot
               </h2>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
                 <Stat label="Total solved" value={analysis.totalSolved.toLocaleString()} icon={CheckCircle2} tone="text-emerald-600 dark:text-emerald-400" />
                 <Stat label="Easy" value={analysis.easySolved} icon={Target} tone="text-emerald-600 dark:text-emerald-400" />
                 <Stat label="Medium" value={analysis.mediumSolved} icon={Target} tone="text-amber-600 dark:text-amber-400" />
@@ -136,6 +171,14 @@ export default function Dashboard() {
               </div>
             </section>
 
+            {/* Coding activity */}
+            <section className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+              <h2 className="font-display mb-4 text-lg font-bold text-slate-900 dark:text-white">
+                Coding activity
+              </h2>
+              <Heatmap heatmap={analysis.profile.heatmap} calendar={analysis.profile.calendar} />
+            </section>
+
             {/* Planner */}
             <section className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
               <div className="mb-5 flex flex-wrap items-center justify-between gap-2">
@@ -144,11 +187,11 @@ export default function Dashboard() {
                     Practice plan
                   </h2>
                   <p className="text-sm text-slate-500 dark:text-slate-400">
-                    Pick a total and split solved vs unsolved.
+                    Pick how many questions — we&apos;ll mix new practice with revision for you.
                   </p>
                 </div>
                 <span className="rounded-full bg-indigo-500/10 px-3 py-1 text-sm font-semibold text-indigo-700 dark:text-indigo-400">
-                  {safeSolved} solved · {total - safeSolved} unsolved
+                  {plan.solvedCount} solved · {total - plan.solvedCount} unsolved
                 </span>
               </div>
 
@@ -166,25 +209,27 @@ export default function Dashboard() {
                     max="50"
                     value={total}
                     onChange={(e) => setTotal(Number(e.target.value))}
-                    className="w-full accent-indigo-600"
+                    className="w-full"
                   />
                 </div>
 
                 <div>
-                  <div className="mb-1.5 flex justify-between text-sm">
-                    <span className="font-medium text-slate-700 dark:text-slate-200">
-                      Solved (revision)
-                    </span>
-                    <span className="font-semibold text-slate-900 dark:text-white">{safeSolved}</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max={total}
-                    value={safeSolved}
-                    onChange={(e) => setSolvedCount(Math.min(total, Number(e.target.value)))}
-                    className="w-full accent-indigo-600"
-                  />
+                  <h3 className="mb-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                    Keep it fresh
+                  </h3>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    Solved new problems since last time? Hit sync to re-check which questions are
+                    now behind you and recalculate the mix.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={sync}
+                    disabled={loading}
+                    className="mt-3 inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-4 font-semibold text-indigo-700 transition hover:bg-indigo-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/50 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900 disabled:cursor-not-allowed disabled:opacity-60 dark:border-indigo-500/30 dark:bg-indigo-500/10 dark:text-indigo-300 dark:hover:bg-indigo-500/20"
+                  >
+                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                    {loading ? 'Syncing…' : 'Sync solved questions'}
+                  </button>
                 </div>
               </div>
 
@@ -201,8 +246,8 @@ export default function Dashboard() {
                       ))
                     ) : (
                       <p className="rounded-2xl border border-dashed border-slate-300 p-4 text-sm text-slate-500 dark:border-slate-700">
-                        Not enough solved problems in the tracked set — raise the unsolved
-                        share.
+                        You haven&apos;t solved enough from the tracked set yet — sync once you
+                        have, and they&apos;ll show up here for revision.
                       </p>
                     )}
                   </div>

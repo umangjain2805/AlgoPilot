@@ -14,7 +14,7 @@ export default function DashboardLayout({ sidebar, children }) {
           <button
             type="button"
             onClick={toggleTheme}
-            className="grid h-9 w-9 place-items-center rounded-lg border border-slate-200 text-slate-600 dark:border-slate-700 dark:text-slate-300"
+            className="grid h-9 w-9 place-items-center rounded-lg border border-slate-200 text-slate-600 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
             aria-label="Toggle theme"
           >
             {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
