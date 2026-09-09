@@ -165,27 +165,61 @@ export function deriveSolvedCount(analysis, total) {
 
 // Generates a practice plan of `total` questions — a mix of solved (revision)
 // and unsolved (fresh) problems, all drawn from the curated important list.
-// The solved/unsolved split is derived automatically. Problems are drawn from
-// the user's weakest topics first, then anything else.
-export function buildPlan(analysis, total) {
-  const solvedCount = deriveSolvedCount(analysis, total)
+// Supports filtering by specific topic and difficulty.
+export function buildPlan(
+  analysis,
+  total = 10,
+  selectedTopic = 'all',
+  selectedDifficulty = 'all',
+) {
+  if (!analysis) return null
 
-  const weakNames = new Set(analysis.weakTopics.map((t) => t.name))
+  const weakNames = new Set(analysis.weakTopics?.map((t) => t.name) || [])
   const weakScore = (p) => (p.tags?.some((tag) => weakNames.has(tag)) ? 1 : 0)
-
   const rank = (p) => DIFFICULTY_ORDER[p.difficulty] ?? 1
 
-  const solvedPool = PROBLEMS.filter((p) => analysis.solvedSet.has(p.titleSlug))
+  const matchesTopic = (p) => {
+    if (!selectedTopic || selectedTopic === 'all') return true
+    return p.tags?.includes(selectedTopic)
+  }
+
+  const matchesDifficulty = (p) => {
+    if (!selectedDifficulty || selectedDifficulty === 'all') return true
+    return p.difficulty === selectedDifficulty
+  }
+
+  const matchesFilters = (p) => matchesTopic(p) && matchesDifficulty(p)
+
+  const solvedPool = PROBLEMS.filter(
+    (p) => analysis.solvedSet?.has(p.titleSlug) && matchesFilters(p),
+  )
     .map((p) => ({ ...p, tags: p.tags || [] }))
     .sort((a, b) => weakScore(b) - weakScore(a) || rank(b) - rank(a))
 
   // Only offer free problems as new practice.
-  const freshPool = FREE_PROBLEMS.filter((p) => !analysis.solvedSet.has(p.titleSlug))
+  const freshPool = FREE_PROBLEMS.filter(
+    (p) => !analysis.solvedSet?.has(p.titleSlug) && matchesFilters(p),
+  )
     .map((p) => ({ ...p, tags: p.tags || [] }))
     .sort((a, b) => weakScore(b) - weakScore(a) || rank(a) - rank(b))
 
-  const revision = solvedPool.slice(0, solvedCount)
-  const fresh = freshPool.slice(0, Math.max(0, total - solvedCount))
+  const totalAvail = solvedPool.length + freshPool.length
+  const effectiveTotal = Math.min(Math.max(1, total), totalAvail > 0 ? totalAvail : total)
 
-  return { revision, fresh, solvedCount }
+  let solvedCount = Math.round(effectiveTotal * 0.4)
+  solvedCount = Math.min(solvedCount, solvedPool.length)
+  solvedCount = Math.max(solvedCount, effectiveTotal - freshPool.length)
+  solvedCount = Math.min(Math.max(0, solvedCount), effectiveTotal)
+
+  const revision = solvedPool.slice(0, solvedCount)
+  const fresh = freshPool.slice(0, Math.max(0, effectiveTotal - solvedCount))
+
+  return {
+    revision,
+    fresh,
+    solvedCount,
+    totalAvailable: totalAvail,
+    solvedAvailable: solvedPool.length,
+    freshAvailable: freshPool.length,
+  }
 }

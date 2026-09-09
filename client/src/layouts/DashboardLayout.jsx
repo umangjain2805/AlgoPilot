@@ -1,30 +1,17 @@
-import { Moon, Sun } from 'lucide-react'
-import { useTheme } from '../hooks/useTheme.js'
+import Navbar from '../components/Navbar.jsx'
 
-export default function DashboardLayout({ sidebar, children }) {
-  const { dark, toggleTheme } = useTheme()
-
+export default function DashboardLayout({ children }) {
   return (
-    <div className="app-glow min-h-screen">
-      <div className="flex min-h-screen flex-col lg:flex-row">
-        <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3 lg:hidden dark:border-slate-800">
-          <span className="font-display font-bold text-slate-900 dark:text-white">
-            LeetCode <span className="text-indigo-600 dark:text-indigo-400">AI Coach</span>
-          </span>
-          <button
-            type="button"
-            onClick={toggleTheme}
-            className="grid h-9 w-9 place-items-center rounded-lg border border-slate-200 text-slate-600 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-            aria-label="Toggle theme"
-          >
-            {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-          </button>
+    <div className="app-glow flex min-h-screen flex-col bg-slate-50 dark:bg-slate-950">
+      <Navbar />
+      <main className="min-w-0 flex-1">
+        {children}
+      </main>
+      <footer className="border-t border-slate-200/70 py-6 text-center text-xs text-slate-400 dark:border-slate-800/70 dark:text-slate-600">
+        <div className="mx-auto max-w-7xl px-4">
+          LeetCode AI Coach · Personalized Interview Prep & Weak Spot Analysis
         </div>
-
-        {sidebar}
-
-        <main className="min-w-0 flex-1">{children}</main>
-      </div>
+      </footer>
     </div>
   )
 }
