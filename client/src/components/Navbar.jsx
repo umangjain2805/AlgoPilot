@@ -16,13 +16,13 @@ export default function Navbar() {
     <header className="sticky top-0 z-40 border-b-2 border-slate-900 bg-white/95 backdrop-blur-md dark:border-slate-100 dark:bg-[#121316]/95">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
         {/* Brand */}
-        <div className="flex items-center gap-6">
-          <Link to="/" className="group flex items-center gap-2.5 focus:outline-none">
-            <span className="grid h-10 w-10 place-items-center rounded-xl border-2 border-slate-900 bg-[#E2F952] text-slate-950 shadow-[2px_2px_0px_0px_#0f172a] transition-transform group-hover:-translate-x-0.5 group-hover:-translate-y-0.5 group-hover:shadow-[3px_3px_0px_0px_#0f172a] dark:border-slate-100 dark:shadow-[2px_2px_0px_0px_#f1f5f9]">
+        <div className="flex min-w-0 items-center gap-6">
+          <Link to="/" className="group flex min-w-0 items-center gap-2.5 focus:outline-none">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border-2 border-slate-900 bg-[#E2F952] text-slate-950 shadow-[2px_2px_0px_0px_#0f172a] transition-transform group-hover:-translate-x-0.5 group-hover:-translate-y-0.5 group-hover:shadow-[3px_3px_0px_0px_#0f172a] dark:border-slate-100 dark:shadow-[2px_2px_0px_0px_#f1f5f9]">
               <Bot className="h-5 w-5" />
             </span>
-            <div className="flex flex-col">
-              <span className="font-display text-base font-black tracking-tight text-slate-950 dark:text-white">
+            <div className="flex min-w-0 flex-col">
+              <span className="truncate font-display text-base font-black tracking-tight text-slate-950 dark:text-white">
                 LeetCode <span className="rounded-md bg-[#E2F952] px-1.5 py-0.5 text-slate-950 dark:text-slate-950">AI Coach</span>
               </span>
               <span className="hidden text-[10px] font-bold text-slate-500 sm:inline dark:text-slate-400">
@@ -70,7 +70,7 @@ export default function Navbar() {
         </div>
 
         {/* Right Action Bar */}
-        <div className="flex items-center gap-2.5 sm:gap-3">
+        <div className="flex shrink-0 items-center gap-2.5 sm:gap-3">
           {profile ? (
             <div className="neo-box-sm flex items-center gap-2 rounded-2xl bg-white p-1 pl-2.5 sm:gap-3 dark:bg-slate-900">
               {/* Profile identity */}

@@ -597,16 +597,16 @@ export default function AnalysisPage() {
                       key={sub.submissionId || `${sub.titleSlug}-${i}`}
                       className="flex items-center justify-between py-3 transition hover:bg-slate-50 dark:hover:bg-slate-800/40"
                     >
-                      <div className="flex items-center gap-3">
-                        <span className="grid h-8 w-8 place-items-center rounded-xl border border-slate-900 bg-emerald-400 text-slate-950 shadow-[1px_1px_0px_0px_#0f172a]">
+                      <div className="flex min-w-0 items-center gap-3">
+                        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl border border-slate-900 bg-emerald-400 text-slate-950 shadow-[1px_1px_0px_0px_#0f172a]">
                           <CheckCircle2 className="h-4 w-4" />
                         </span>
-                        <div>
+                        <div className="min-w-0">
                           <a
                             href={`https://leetcode.com/problems/${sub.titleSlug}/`}
                             target="_blank"
                             rel="noreferrer"
-                            className="font-bold text-slate-950 hover:underline dark:text-white"
+                            className="block truncate font-bold text-slate-950 hover:underline dark:text-white"
                           >
                             {sub.title}
                           </a>
@@ -620,7 +620,7 @@ export default function AnalysisPage() {
                         href={`https://leetcode.com/problems/${sub.titleSlug}/`}
                         target="_blank"
                         rel="noreferrer"
-                        className="neo-btn rounded-xl bg-white px-3 py-1 text-xs font-bold text-slate-900 dark:bg-slate-800 dark:text-white"
+                        className="neo-btn shrink-0 rounded-xl bg-white px-3 py-1 text-xs font-bold text-slate-900 dark:bg-slate-800 dark:text-white"
                       >
                         Solve ↗
                       </a>

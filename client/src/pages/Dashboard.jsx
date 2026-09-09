@@ -316,12 +316,12 @@ export default function Dashboard() {
 
                 {/* 3. Difficulty Filter (Optional) */}
                 <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200/60 pt-4 dark:border-slate-700/60">
-                  <div className="flex items-center gap-2">
-                    <Filter className="h-3.5 w-3.5 text-slate-400" />
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Filter className="h-3.5 w-3.5 shrink-0 text-slate-400" />
                     <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                       Difficulty:
                     </span>
-                    <div className="flex rounded-xl bg-slate-200/60 p-1 dark:bg-slate-800">
+                    <div className="flex flex-wrap rounded-xl bg-slate-200/60 p-1 dark:bg-slate-800">
                       {[
                         { id: 'all', label: 'All Levels' },
                         { id: 'Easy', label: 'Easy' },
@@ -332,7 +332,7 @@ export default function Dashboard() {
                           key={diff.id}
                           type="button"
                           onClick={() => setSelectedDifficulty(diff.id)}
-                          className={`rounded-lg px-3 py-1 text-xs font-semibold transition ${
+                          className={`whitespace-nowrap rounded-lg px-3 py-1 text-xs font-semibold transition ${
                             selectedDifficulty === diff.id
                               ? 'bg-white text-indigo-700 shadow-2xs dark:bg-slate-700 dark:text-indigo-300'
                               : 'text-slate-600 hover:text-slate-900 dark:text-slate-400'
