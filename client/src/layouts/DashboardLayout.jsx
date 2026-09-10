@@ -2,7 +2,7 @@ import Navbar from '../components/Navbar.jsx'
 
 export default function DashboardLayout({ children }) {
   return (
-    <div className="app-glow flex min-h-screen flex-col bg-slate-50 dark:bg-slate-950">
+    <div className="flex min-h-screen flex-col bg-slate-50 dark:bg-slate-950">
       <Navbar />
       <main className="min-w-0 flex-1">
         {children}

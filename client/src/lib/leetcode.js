@@ -147,22 +147,6 @@ export function buildAnalysis(profile) {
   }
 }
 
-// Works out how many of `total` should be revision (already solved) versus
-// fresh (unsolved). Targets ~40% revision by default but clamps to what the
-// user has actually solved / still has left unsolved in the curated set.
-export function deriveSolvedCount(analysis, total) {
-  const solvedAvail = analysis.datasetSolved
-  const freshAvail = FREE_PROBLEMS.filter((p) => !analysis.solvedSet.has(p.titleSlug)).length
-
-  let solved = Math.round(total * 0.4)
-  // Can't revise more than the user has solved in the tracked set…
-  solved = Math.min(solved, solvedAvail)
-  // …and can't ask for more fresh problems than are actually left unsolved.
-  solved = Math.max(solved, total - freshAvail)
-
-  return Math.min(Math.max(0, solved), total)
-}
-
 // Generates a practice plan of `total` questions — a mix of solved (revision)
 // and unsolved (fresh) problems, all drawn from the curated important list.
 // Supports filtering by specific topic and difficulty.

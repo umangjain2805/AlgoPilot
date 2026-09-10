@@ -36,6 +36,8 @@ const timeAgo = (timestamp) => {
   return `${Math.floor(months / 12)}y ago`
 }
 
+const pctOf = (n, total) => (total ? Math.round((n / total) * 100) : 0)
+
 export default function AnalysisPage() {
   const navigate = useNavigate()
   const { profile, analysis, loading, error, sync, savedAt, setSelectedTopic } = useLeetCode()
@@ -410,7 +412,7 @@ export default function AnalysisPage() {
                           <span className="font-black text-slate-950 dark:text-white">
                             {analysis.easySolved}
                           </span>
-                          <span className="ml-1.5 text-xs text-slate-500">({easyRatio}%)</span>
+                          <span className="ml-1.5 text-xs text-slate-500">({pctOf(analysis.easySolved, analysis.totalSolved)}%)</span>
                         </div>
                       </div>
                       <ProgressBar
@@ -431,7 +433,7 @@ export default function AnalysisPage() {
                           <span className="font-black text-slate-950 dark:text-white">
                             {analysis.mediumSolved}
                           </span>
-                          <span className="ml-1.5 text-xs text-slate-500">({mediumRatio}%)</span>
+                          <span className="ml-1.5 text-xs text-slate-500">({pctOf(analysis.mediumSolved, analysis.totalSolved)}%)</span>
                         </div>
                       </div>
                       <ProgressBar
@@ -452,7 +454,7 @@ export default function AnalysisPage() {
                           <span className="font-black text-slate-950 dark:text-white">
                             {analysis.hardSolved}
                           </span>
-                          <span className="ml-1.5 text-xs text-slate-500">({hardRatio}%)</span>
+                          <span className="ml-1.5 text-xs text-slate-500">({pctOf(analysis.hardSolved, analysis.totalSolved)}%)</span>
                         </div>
                       </div>
                       <ProgressBar
@@ -465,7 +467,7 @@ export default function AnalysisPage() {
 
                   <div className="neo-box-sm mt-5 rounded-2xl bg-[#E2F952] p-4 text-xs font-bold text-slate-950">
                     <span className="font-black">Coaching Diagnosis:</span>{' '}
-                    {hardRatio < 10
+                    {pctOf(analysis.hardSolved, analysis.totalSolved) < 10
                       ? 'Hard problems make up under 10% of solves. Target higher-tier FAANG interviews by elevating Medium & Hard practice.'
                       : 'Excellent difficulty mix! Keep pushing on dynamic programming and graph hard problems.'}
                   </div>

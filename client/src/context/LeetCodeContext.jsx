@@ -98,7 +98,6 @@ export function LeetCodeProvider({ children }) {
     setInput,
     loading,
     error,
-    setError,
     profile,
     savedAt,
     total,
@@ -112,7 +111,6 @@ export function LeetCodeProvider({ children }) {
     handleSubmit,
     sync,
     reset,
-    runFetch,
   }
 
   return <LeetCodeContext.Provider value={value}>{children}</LeetCodeContext.Provider>
