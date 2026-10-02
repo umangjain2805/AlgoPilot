@@ -52,6 +52,54 @@ export async function fetchProfile(username) {
   return payload.data.profile
 }
 
+// The 20 canonical DSA topics requested by the user with their corresponding LeetCode tags.
+export const CURATED_DSA_TOPICS = [
+  { name: 'Arrays', tags: ['Array', 'Arrays'] },
+  { name: 'Strings', tags: ['String', 'Strings'] },
+  { name: 'Hashing (Map / Set)', tags: ['Hash Table', 'Hash Function', 'Ordered Set', 'Hashing'] },
+  { name: 'Two Pointers', tags: ['Two Pointers'] },
+  { name: 'Sliding Window', tags: ['Sliding Window'] },
+  { name: 'Prefix Sum', tags: ['Prefix Sum'] },
+  { name: 'Binary Search', tags: ['Binary Search'] },
+  { name: 'Recursion', tags: ['Recursion'] },
+  { name: 'Backtracking', tags: ['Backtracking'] },
+  { name: 'Linked List', tags: ['Linked List', 'Doubly-Linked List'] },
+  { name: 'Stack', tags: ['Stack'] },
+  { name: 'Queue', tags: ['Queue', 'Monotonic Queue'] },
+  { name: 'Monotonic Stack', tags: ['Monotonic Stack'] },
+  { name: 'Trees (Binary Tree / BST)', tags: ['Tree', 'Binary Tree', 'Binary Search Tree', 'Trie'] },
+  {
+    name: 'Graphs',
+    tags: ['Graph', 'Graph Theory', 'Breadth-First Search', 'Depth-First Search', 'Topological Sort'],
+  },
+  { name: 'Greedy', tags: ['Greedy'] },
+  { name: 'Heap / Priority Queue', tags: ['Heap', 'Heap (Priority Queue)'] },
+  { name: 'Dynamic Programming (DP)', tags: ['Dynamic Programming', 'Memoization'] },
+  { name: 'Bit Manipulation', tags: ['Bit Manipulation', 'Bitmask'] },
+  { name: 'Union Find (DSU)', tags: ['Union Find', 'Union-Find', 'Disjoint Set'] },
+]
+
+// Per-topic coverage across the curated problem set (used as the recommendation
+// pool and as a fallback when the backend has no full-catalog topic stats).
+const computeCuratedTopics = (solvedSet) => {
+  return CURATED_DSA_TOPICS.map((topic) => {
+    const matchingProblems = PROBLEMS.filter((p) =>
+      (p.tags || []).some((tag) => topic.tags.includes(tag)),
+    )
+    const total = matchingProblems.length
+    const solved = matchingProblems.filter((p) => solvedSet.has(p.titleSlug)).length
+
+    return {
+      name: topic.name,
+      total,
+      solved,
+      unsolved: Math.max(0, total - solved),
+      ratio: total ? solved / total : 0,
+      hasCurated: total > 0,
+    }
+  }).sort((a, b) => a.ratio - b.ratio || b.total - a.total)
+}
+
 // Builds the full analysis object used by the sidebar and the planner.
 export function buildAnalysis(profile) {
   const solvedSet = new Set(profile.solvedSlugs || [])
@@ -61,29 +109,51 @@ export function buildAnalysis(profile) {
   const mediumSolved = Number(profile.mediumSolved) || 0
   const hardSolved = Number(profile.hardSolved) || 0
 
-  // Per-topic coverage across the curated problem set.
-  const topicMap = new Map()
-  for (const problem of PROBLEMS) {
-    for (const tag of problem.tags || []) {
-      if (!topicMap.has(tag)) topicMap.set(tag, { total: 0, solved: 0 })
-      const entry = topicMap.get(tag)
-      entry.total += 1
-      if (solvedSet.has(problem.titleSlug)) entry.solved += 1
-    }
-  }
+  const curatedTopics = computeCuratedTopics(solvedSet)
+  const curatedMap = new Map(curatedTopics.map((t) => [t.name, t]))
 
-  const topics = [...topicMap.entries()]
-    .map(([name, { total, solved }]) => ({
-      name,
+  // Topic coverage measured against LeetCode's full problem catalog (fetched by
+  // the backend). Falls back to the curated dataset when the catalog is absent.
+  // Filters STRICTLY to the 20 requested DSA topics.
+  const stats = Array.isArray(profile.solvedTopicStats) ? profile.solvedTopicStats : []
+  const statMap = new Map(stats.map((s) => [s.name, s]))
+
+  const topics = CURATED_DSA_TOPICS.map((topic) => {
+    let catalogTotal = 0
+    let catalogSolved = 0
+    let foundCatalogStat = false
+
+    for (const tag of topic.tags) {
+      const s = statMap.get(tag)
+      if (s) {
+        foundCatalogStat = true
+        catalogTotal = Math.max(catalogTotal, Number(s.total) || 0)
+        catalogSolved = Math.max(catalogSolved, Number(s.solved) || 0)
+      }
+    }
+
+    const curatedEntry = curatedMap.get(topic.name)
+    const total = foundCatalogStat && catalogTotal > 0 ? catalogTotal : (curatedEntry?.total || 0)
+    const solved = foundCatalogStat && catalogTotal > 0 ? catalogSolved : (curatedEntry?.solved || 0)
+
+    return {
+      name: topic.name,
       total,
       solved,
-      unsolved: total - solved,
+      unsolved: Math.max(0, total - solved),
       ratio: total ? solved / total : 0,
-    }))
-    .sort((a, b) => a.ratio - b.ratio || b.total - a.total)
+      hasCurated: (curatedEntry?.total || 0) > 0,
+    }
+  }).sort((a, b) => a.ratio - b.ratio || b.total - a.total)
 
-  const weakTopics = topics.filter((t) => t.ratio < 1).slice(0, 6)
-  const strongTopics = topics.filter((t) => t.total > 0).slice(-3).reverse()
+  // Weak topics = the least-practised topics we can actually recommend from the
+  // curated set. `topics` is already sorted least-practised first.
+  const weakTopics = topics.filter((t) => t.hasCurated && t.solved < t.total).slice(0, 8)
+
+  const strongTopics = [...topics]
+    .filter((t) => t.total > 0)
+    .sort((a, b) => b.ratio - a.ratio)
+    .slice(0, 6)
 
   const datasetSolved = PROBLEMS.filter((p) => solvedSet.has(p.titleSlug)).length
   const datasetUnsolved = PROBLEMS.length - datasetSolved
@@ -101,6 +171,13 @@ export function buildAnalysis(profile) {
     if (mediumSolved < easySolved && easySolved > 0) {
       insights.push('Easy problems dominate — move the bulk of your practice to Medium.')
     }
+  }
+
+  if (stats.length > 0) {
+    const practiced = topics.filter((t) => t.solved > 0).length
+    insights.push(
+      `Across LeetCode's full catalog you have practised ${practiced} of ${topics.length} tagged topics.`,
+    )
   }
 
   const acceptanceRate = Number(profile.acceptanceRate) || 0
@@ -164,6 +241,10 @@ export function buildPlan(
 
   const matchesTopic = (p) => {
     if (!selectedTopic || selectedTopic === 'all') return true
+    const topicConfig = CURATED_DSA_TOPICS.find((t) => t.name === selectedTopic)
+    if (topicConfig) {
+      return (p.tags || []).some((tag) => topicConfig.tags.includes(tag))
+    }
     return p.tags?.includes(selectedTopic)
   }
 

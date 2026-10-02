@@ -1,140 +1,52 @@
-import { spawn } from 'node:child_process'
-import fs from 'node:fs'
-import os from 'node:os'
-import path from 'node:path'
 import { ApiError } from '../../utils/ApiError.js'
+import {
+  PROBLEM_LIST_QUERY,
+  RECENT_AC_SUBMISSIONS_QUERY,
+  SKILL_STATS_QUERY,
+} from './queries.js'
 
-const LEETCODE_URL = 'https://leetcode.com'
-const LEETCODE_GRAPHQL_URL = `${LEETCODE_URL}/graphql`
+const LEETCODE_GRAPHQL_URL = 'https://leetcode.com/graphql'
 
 const USER_AGENT =
-  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
 
-// LeetCode's bot protection blocks non-browser TLS fingerprints (including Node's
-// native fetch), so requests are made through the system curl binary, which is
-// available on Windows 10+, macOS and Linux.
-const cookieJar = path.join(os.tmpdir(), `lc-csrftoken-${process.pid}.txt`)
+const REQUEST_TIMEOUT_MS = 15000
 
-let csrfToken = null
-let csrfPromise = null
-
-const runCurl = (args, input) =>
-  new Promise((resolve, reject) => {
-    const child = spawn('curl', args, { windowsHide: true })
-    let stdout = ''
-    let stderr = ''
-
-    child.stdout.on('data', (chunk) => (stdout += chunk))
-    child.stderr.on('data', (chunk) => (stderr += chunk))
-    child.on('error', reject)
-    child.on('close', (code) => resolve({ code, stdout, stderr }))
-
-    if (input) child.stdin.write(input)
-    child.stdin.end()
-  })
-
-// Runs curl and returns the HTTP status plus the response body.
-const curlRequest = async (args, input) => {
-  const { code, stdout } = await runCurl([...args, '-w', '\n__HTTP_STATUS__:%{http_code}'], input)
-
-  if (code !== 0) {
-    throw new ApiError(502, 'Unable to reach LeetCode. Please try again later.')
-  }
-
-  const parts = stdout.trim().split('\n')
-  const statusLine = parts.pop() || ''
-  const status = Number(statusLine.split(':')[1])
-  const body = parts.join('\n')
-
-  return { status, body }
-}
-
-// Obtains (and caches) the csrftoken cookie required by LeetCode's CSRF protection.
-const ensureCsrfToken = async () => {
-  if (csrfToken) return csrfToken
-
-  if (!csrfPromise) {
-    csrfPromise = (async () => {
-      await curlRequest([
-        '-s',
-        '-c',
-        cookieJar,
-        '-o',
-        os.devNull,
-        '-H',
-        `User-Agent: ${USER_AGENT}`,
-        '-H',
-        'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        LEETCODE_URL,
-      ])
-
-      const jarContents = fs.existsSync(cookieJar) ? fs.readFileSync(cookieJar, 'utf8') : ''
-      const match = jarContents.match(/csrftoken\s+(\S+)/)
-
-      if (!match) {
-        throw new ApiError(502, 'Unable to initialize LeetCode session. Please try again later.')
-      }
-
-      csrfToken = match[1]
-      return csrfToken
-    })().finally(() => {
-      csrfPromise = null
-    })
-  }
-
-  return csrfPromise
-}
-
+/**
+ * Executes a GraphQL query against LeetCode's public GraphQL API.
+ * LeetCode's public queries do not require CSRF tokens or cookies.
+ */
 const graphqlRequest = async ({ query, variables = {}, username }) => {
-  const attempt = async () => {
-    const token = await ensureCsrfToken()
-    const body = JSON.stringify({ query, variables })
-
-    return curlRequest(
-      [
-        '-s',
-        '-b',
-        cookieJar,
-        '-c',
-        cookieJar,
-        '-X',
-        'POST',
-        '-H',
-        'Content-Type: application/json',
-        '-H',
-        'Accept: application/json',
-        '-H',
-        `User-Agent: ${USER_AGENT}`,
-        '-H',
-        'Origin: https://leetcode.com',
-        '-H',
-        `Referer: ${LEETCODE_URL}/u/${username || ''}/`,
-        '-H',
-        `X-CSRFToken: ${token}`,
-        '--data-binary',
-        '@-',
-        LEETCODE_GRAPHQL_URL,
-      ],
-      body,
-    )
+  const headers = {
+    'Content-Type': 'application/json',
+    Accept: 'application/json',
+    'User-Agent': USER_AGENT,
+    Origin: 'https://leetcode.com',
+    Referer: `https://leetcode.com/u/${username || ''}/`,
   }
 
-  let { status, body } = await attempt()
-
-  // A 403 usually means the CSRF token expired; refresh it and retry once.
-  if (status === 403) {
-    csrfToken = null
-    if (fs.existsSync(cookieJar)) fs.unlinkSync(cookieJar)
-    ;({ status, body } = await attempt())
+  let response
+  try {
+    response = await fetch(LEETCODE_GRAPHQL_URL, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ query, variables }),
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    })
+  } catch (err) {
+    if (err.name === 'TimeoutError') {
+      throw new ApiError(504, 'LeetCode request timed out. Please try again.')
+    }
+    throw new ApiError(502, `Unable to reach LeetCode: ${err.message}`)
   }
 
-  if (status !== 200) {
+  if (!response.ok) {
     throw new ApiError(502, 'LeetCode is temporarily unavailable. Please try again later.')
   }
 
   let json
   try {
-    json = JSON.parse(body)
+    json = await response.json()
   } catch {
     throw new ApiError(502, 'Invalid response received from LeetCode.')
   }
@@ -155,37 +67,117 @@ const graphqlRequest = async ({ query, variables = {}, username }) => {
 export const leetcodeRequest = (query, variables, username) =>
   graphqlRequest({ query, variables, username })
 
-// Fetches the full list of accepted submissions from LeetCode's public
-// /api/{username}/acSubmission endpoint. Returns [{ titleSlug, ... }, ...].
-// Best-effort: on transport errors returns an empty array and lets the
-// caller continue without solved slugs (recommendations will be less
-// personalised but the request still completes).
+/**
+ * Fetches recent accepted submission slugs for a user via GraphQL.
+ */
 export const fetchAcSubmissionSlugs = async (username) => {
-  const url = `${LEETCODE_URL}/api/${username}/acSubmission/`
-
   try {
-    const { status, body } = await curlRequest([
-      '-s',
-      '-H',
-      `User-Agent: ${USER_AGENT}`,
-      '-H',
-      'Accept: application/json',
-      url,
-    ])
+    const data = await graphqlRequest({
+      query: RECENT_AC_SUBMISSIONS_QUERY,
+      variables: { username, limit: 100 },
+      username,
+    })
 
-    if (status !== 200) return []
-
-    let json
-    try {
-      json = JSON.parse(body)
-    } catch {
-      return []
-    }
-
-    const list = Array.isArray(json?.acSubmissionList) ? json.acSubmissionList : []
+    const list = Array.isArray(data?.recentAcSubmissionList) ? data.recentAcSubmissionList : []
     const slugs = list.map((entry) => entry?.titleSlug).filter(Boolean)
     return [...new Set(slugs)]
   } catch {
     return []
   }
+}
+
+/**
+ * Fetches tag-level problem counts (fundamental, intermediate, advanced)
+ * directly from LeetCode's skillStats GraphQL query.
+ */
+export const fetchSkillStats = async (username) => {
+  try {
+    const data = await graphqlRequest({
+      query: SKILL_STATS_QUERY,
+      variables: { username },
+      username,
+    })
+    return data?.matchedUser?.tagProblemCounts || null
+  } catch {
+    return null
+  }
+}
+
+// ---- Full problem catalog (cached) ----
+//
+// Fetches every LeetCode problem with its topic tags so a user's solved slugs
+// can be mapped to topics. The catalog is cached in memory for 24 hours.
+
+const CATALOG_PAGE_SIZE = 100
+const CATALOG_TTL_MS = 24 * 60 * 60 * 1000
+const CATALOG_MAX_PAGES = 50 // safety cap (~5000 problems)
+
+let catalogCache = null // { problems, fetchedAt }
+let catalogLoadPromise = null
+
+const normalizeCatalogProblem = (question) => ({
+  titleSlug: question?.titleSlug || '',
+  title: question?.title || '',
+  difficulty: question?.difficulty || '',
+  paidOnly: Boolean(question?.isPaidOnly ?? question?.paidOnly),
+  tags: Array.isArray(question?.topicTags)
+    ? question.topicTags.map((t) => t?.name).filter(Boolean)
+    : [],
+})
+
+const loadCatalog = async () => {
+  const firstPage = await graphqlRequest({
+    query: PROBLEM_LIST_QUERY,
+    variables: { categorySlug: '', skip: 0, limit: CATALOG_PAGE_SIZE, filters: {} },
+  })
+
+  const total = Number(firstPage?.problemsetQuestionList?.total) || 0
+  const questions = [...(firstPage?.problemsetQuestionList?.questions || [])]
+
+  if (total === 0) {
+    return []
+  }
+
+  const pages = Math.min(Math.ceil(total / CATALOG_PAGE_SIZE), CATALOG_MAX_PAGES)
+
+  for (let page = 1; page < pages; page += 1) {
+    const data = await graphqlRequest({
+      query: PROBLEM_LIST_QUERY,
+      variables: {
+        categorySlug: '',
+        skip: page * CATALOG_PAGE_SIZE,
+        limit: CATALOG_PAGE_SIZE,
+        filters: {},
+      },
+    })
+    questions.push(...(data?.problemsetQuestionList?.questions || []))
+  }
+
+  return questions.map(normalizeCatalogProblem).filter((p) => p.titleSlug && p.tags.length > 0)
+}
+
+export const fetchProblemCatalog = async () => {
+  if (catalogCache && Date.now() - catalogCache.fetchedAt < CATALOG_TTL_MS) {
+    return catalogCache.problems
+  }
+
+  if (catalogLoadPromise) {
+    return catalogLoadPromise
+  }
+
+  catalogLoadPromise = loadCatalog()
+    .then((problems) => {
+      catalogCache = { problems, fetchedAt: Date.now() }
+      return problems
+    })
+    .finally(() => {
+      catalogLoadPromise = null
+    })
+
+  return catalogLoadPromise
+}
+
+// Preloads problem catalog in the background so the first request is instant.
+export const warmProblemCatalog = () => {
+  fetchProblemCatalog().catch(() => {})
 }

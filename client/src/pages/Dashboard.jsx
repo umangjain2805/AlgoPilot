@@ -219,9 +219,15 @@ export default function Dashboard() {
                           ))}
                         </optgroup>
                       )}
-                      <optgroup label="All Topics (A-Z)">
+                      <optgroup label="Core DSA Topics (A-Z)">
                         {analysis?.topics
-                          ?.filter((t) => !analysis.weakTopics?.some((w) => w.name === t.name))
+                          ?.slice()
+                          .sort((a, b) => a.name.localeCompare(b.name))
+                          .filter(
+                            (t) =>
+                              t.hasCurated &&
+                              !analysis.weakTopics?.some((w) => w.name === t.name),
+                          )
                           .map((topic) => (
                             <option key={topic.name} value={topic.name}>
                               {topic.name} ({topic.solved}/{topic.total})

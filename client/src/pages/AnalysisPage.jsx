@@ -44,13 +44,30 @@ export default function AnalysisPage() {
   const [activeTab, setActiveTab] = useState('topics') // 'topics' | 'curriculum' | 'insights' | 'activity'
   const [topicFilter, setTopicFilter] = useState('weak') // 'all' | 'weak' | 'mastered'
 
+  // Full-catalog topic stats have large totals (hundreds+), so mastery is
+  // bucketed by solved count; the curated fallback uses coverage ratio instead.
+  const isCatalogScale = (analysis?.topics || []).some((t) => Number(t.total) >= 100)
+  const classifyTopic = (topic) => {
+    if (isCatalogScale) {
+      if (topic.solved < 5) return 'weak'
+      if (topic.solved < 20) return 'mid'
+      return 'solid'
+    }
+    if (topic.ratio < 0.3) return 'weak'
+    if (topic.ratio < 0.6) return 'mid'
+    return 'solid'
+  }
+
   // Filter topics
   const filteredTopics =
     analysis?.topics?.filter((topic) => {
-      if (topicFilter === 'weak') return topic.ratio < 0.5
-      if (topicFilter === 'mastered') return topic.ratio >= 0.5
+      const tier = classifyTopic(topic)
+      if (topicFilter === 'weak') return tier === 'weak'
+      if (topicFilter === 'mastered') return tier === 'solid'
       return true
     }) || []
+  const weakCount = (analysis?.topics || []).filter((t) => classifyTopic(t) === 'weak').length
+  const solidCount = (analysis?.topics || []).filter((t) => classifyTopic(t) === 'solid').length
 
   return (
     <DashboardLayout>
@@ -290,7 +307,7 @@ export default function AnalysisPage() {
                           : 'text-slate-600 hover:text-slate-950 dark:text-slate-400 dark:hover:text-white'
                       }`}
                     >
-                      Weak Spots ({analysis.weakTopics.length})
+                      Weak Spots ({weakCount})
                     </button>
                     <button
                       type="button"
@@ -301,7 +318,7 @@ export default function AnalysisPage() {
                           : 'text-slate-600 hover:text-slate-950 dark:text-slate-400 dark:hover:text-white'
                       }`}
                     >
-                      Solid ({analysis.topics.length - analysis.weakTopics.length})
+                      Solid ({solidCount})
                     </button>
                     <button
                       type="button"
@@ -320,9 +337,11 @@ export default function AnalysisPage() {
                 {/* Cards Grid */}
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {filteredTopics.map((topic) => {
-                    const pct = Math.round(topic.ratio * 100)
-                    const isWeak = topic.ratio < 0.3
-                    const isMid = topic.ratio >= 0.3 && topic.ratio < 0.6
+                    const tier = classifyTopic(topic)
+                    const isWeak = tier === 'weak'
+                    const isMid = tier === 'mid'
+                    const tierLabel =
+                      tier === 'weak' ? 'Needs practice' : tier === 'mid' ? 'Developing' : 'Practiced'
 
                     return (
                       <div
@@ -343,7 +362,7 @@ export default function AnalysisPage() {
                                     : 'bg-emerald-300 text-slate-950'
                               }`}
                             >
-                              {pct}% Solved
+                              {tierLabel}
                             </span>
                           </div>
 
@@ -367,17 +386,23 @@ export default function AnalysisPage() {
                           </div>
                         </div>
 
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setSelectedTopic(topic.name)
-                            navigate('/')
-                          }}
-                          className="neo-btn mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-[#FAFAF8] py-2 text-xs font-black text-slate-900 hover:bg-[#E2F952] dark:bg-slate-800 dark:text-white dark:hover:bg-[#E2F952] dark:hover:text-slate-950"
-                        >
-                          <span>Practice {topic.name}</span>
-                          <ChevronRight className="h-3.5 w-3.5" />
-                        </button>
+                        {topic.hasCurated ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedTopic(topic.name)
+                              navigate('/')
+                            }}
+                            className="neo-btn mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-[#FAFAF8] py-2 text-xs font-black text-slate-900 hover:bg-[#E2F952] dark:bg-slate-800 dark:text-white dark:hover:bg-[#E2F952] dark:hover:text-slate-950"
+                          >
+                            <span>Practice {topic.name}</span>
+                            <ChevronRight className="h-3.5 w-3.5" />
+                          </button>
+                        ) : (
+                          <span className="mt-4 inline-flex w-full items-center justify-center rounded-xl bg-slate-100 py-2 text-xs font-bold text-slate-400 dark:bg-slate-800 dark:text-slate-500">
+                            No curated problems
+                          </span>
+                        )}
                       </div>
                     )
                   })}

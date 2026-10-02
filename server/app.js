@@ -7,6 +7,7 @@ import { requestLogger } from './middleware/requestLogger.js'
 import { notFoundHandler } from './middleware/notFoundHandler.js'
 import { errorMiddleware } from './middleware/errorMiddleware.js'
 import leetcodeRoutes from './routes/leetcodeRoutes.js'
+import leetcodeSyncRoutes from './routes/leetcodeSync.routes.js'
 
 const app = express()
 
@@ -54,6 +55,8 @@ app.get('/api/health', (_req, res) => {
 })
 
 // ---- Routes ----
+app.use('/', leetcodeSyncRoutes) // POST /sync-leetcode
+app.use('/api', leetcodeSyncRoutes) // POST /api/sync-leetcode
 app.use('/api/leetcode', leetcodeRoutes)
 
 // ---- 404 & error handling ----
