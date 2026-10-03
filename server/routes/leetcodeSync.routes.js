@@ -4,7 +4,7 @@ import { syncLeetcode } from '../controllers/leetcodeSync.controller.js'
 const router = Router()
 
 // @route   POST /sync-leetcode
-// @desc    Fetch and sync solved question IDs for a user into MongoDB
+// @desc    Compatibility endpoint for read-only public profile sync
 router.post('/sync-leetcode', syncLeetcode)
 
 export default router

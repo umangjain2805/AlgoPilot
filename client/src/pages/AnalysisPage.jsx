@@ -5,7 +5,6 @@ import {
   Bot,
   Brain,
   Check,
-  CheckCircle2,
   ChevronRight,
   Clock,
   ExternalLink,
@@ -20,6 +19,7 @@ import { useLeetCode } from '../hooks/useLeetCode.js'
 import DashboardLayout from '../layouts/DashboardLayout.jsx'
 import ProgressBar from '../components/ProgressBar.jsx'
 import { PROBLEMS } from '../lib/leetcode.js'
+import PracticeTools from '../components/PracticeTools.jsx'
 
 const timeAgo = (timestamp) => {
   if (!timestamp) return 'recently'
@@ -44,15 +44,8 @@ export default function AnalysisPage() {
   const [activeTab, setActiveTab] = useState('topics') // 'topics' | 'curriculum' | 'insights' | 'activity'
   const [topicFilter, setTopicFilter] = useState('weak') // 'all' | 'weak' | 'mastered'
 
-  // Full-catalog topic stats have large totals (hundreds+), so mastery is
-  // bucketed by solved count; the curated fallback uses coverage ratio instead.
-  const isCatalogScale = (analysis?.topics || []).some((t) => Number(t.total) >= 100)
+  // Coverage is measured against distinct free curated questions.
   const classifyTopic = (topic) => {
-    if (isCatalogScale) {
-      if (topic.solved < 5) return 'weak'
-      if (topic.solved < 20) return 'mid'
-      return 'solid'
-    }
     if (topic.ratio < 0.3) return 'weak'
     if (topic.ratio < 0.6) return 'mid'
     return 'solid'
@@ -148,7 +141,7 @@ export default function AnalysisPage() {
                     {profile.realName || profile.leetcodeUsername}
                   </h1>
                   <span
-                    title="Verified LeetCode Profile"
+                    title="Public LeetCode profile"
                     className="grid h-5 w-5 place-items-center rounded-full border-1.5 border-slate-900 bg-emerald-400 text-slate-950 shadow-[1px_1px_0px_0px_#0f172a] dark:border-slate-100"
                   >
                     <Check className="h-3 w-3 stroke-[3]" />
@@ -168,13 +161,18 @@ export default function AnalysisPage() {
                   </a>
                   {savedAt && (
                     <span className="text-[10px] font-bold text-slate-400">
-                      · Synced {new Date(savedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      · Synced{' '}
+                      {new Date(savedAt).toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
                     </span>
                   )}
                 </div>
 
                 <p className="mt-2 max-w-lg text-xs font-medium text-slate-600 sm:text-sm dark:text-slate-400">
-                  Comprehensive DSA readiness diagnostic · {analysis.streak}-day solve streak · {analysis.datasetSolved} problems mastered from curriculum.
+                  Recorded practice coverage · {analysis.streak}-day solve streak ·{' '}
+                  {analysis.datasetSolved} recorded solves from curriculum.
                 </p>
 
                 {/* Segmented Stat Boxes (exact replica of 1,432 Followers | 10.0k NFTs Value | 126 NFTs Owned) */}
@@ -190,10 +188,10 @@ export default function AnalysisPage() {
 
                   <div className="neo-box-sm rounded-2xl bg-[#FAFAF8] p-3 text-center sm:p-4 dark:bg-slate-800">
                     <p className="font-display text-xl font-black text-slate-950 sm:text-2xl dark:text-white">
-                      {analysis.acceptanceRate}%
+                      {analysis.acceptanceRate == null ? 'N/A' : `${analysis.acceptanceRate}%`}
                     </p>
                     <p className="mt-0.5 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                      Accuracy
+                      Accepted submissions
                     </p>
                   </div>
 
@@ -234,7 +232,11 @@ export default function AnalysisPage() {
                     disabled={loading}
                     className="neo-btn inline-flex items-center justify-center gap-2 rounded-2xl bg-white py-3 px-5 text-sm font-bold text-slate-900 hover:bg-slate-50 dark:bg-slate-800 dark:text-white"
                   >
-                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                    {loading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <RefreshCw className="h-4 w-4" />
+                    )}
                     <span>Re-sync</span>
                   </button>
 
@@ -250,14 +252,19 @@ export default function AnalysisPage() {
               </div>
             </div>
 
+            <PracticeTools />
             {/* 2. Navigation Tabs (matching Item's / Activity with highlighter from reference) */}
             <div className="flex border-b-2 border-slate-900 pb-2 dark:border-slate-100">
               <div className="flex flex-wrap gap-2">
                 {[
-                  { id: 'topics', label: "Topic Mastery", count: analysis.topics.length },
-                  { id: 'curriculum', label: "Difficulty & Core Set", count: PROBLEMS.length },
-                  { id: 'insights', label: "AI Insights", count: analysis.insights.length },
-                  { id: 'activity', label: "Recent Activity", count: profile.recentSubmissions?.length || 0 },
+                  { id: 'topics', label: 'Topic Coverage', count: analysis.topics.length },
+                  { id: 'curriculum', label: 'Difficulty & Core Set', count: PROBLEMS.length },
+                  { id: 'insights', label: 'Practice Insights', count: analysis.insights.length },
+                  {
+                    id: 'activity',
+                    label: 'Recent Activity',
+                    count: profile.recentSubmissions?.length || 0,
+                  },
                 ].map((tab) => {
                   const isActive = activeTab === tab.id
                   return (
@@ -285,11 +292,11 @@ export default function AnalysisPage() {
 
             {/* Tab 1: Topic Mastery (Card Grid matching the reference cards with illustrations) */}
             {activeTab === 'topics' && (
-              <div className="space-y-6">
+              <div className="tab-enter space-y-6">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <h2 className="font-display text-lg font-black text-slate-950 dark:text-white">
-                      Topic Mastery & Skill Gap Matrix
+                      Topic Practice Coverage
                     </h2>
                     <p className="text-xs font-medium text-slate-600 dark:text-slate-400">
                       Problems solved across key interview algorithm paradigms.
@@ -336,17 +343,22 @@ export default function AnalysisPage() {
 
                 {/* Cards Grid */}
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {filteredTopics.map((topic) => {
+                  {filteredTopics.map((topic, index) => {
                     const tier = classifyTopic(topic)
                     const isWeak = tier === 'weak'
                     const isMid = tier === 'mid'
                     const tierLabel =
-                      tier === 'weak' ? 'Needs practice' : tier === 'mid' ? 'Developing' : 'Practiced'
+                      tier === 'weak'
+                        ? 'Needs practice'
+                        : tier === 'mid'
+                          ? 'Developing'
+                          : 'Practiced'
 
                     return (
                       <div
                         key={topic.name}
-                        className="neo-box group flex flex-col justify-between rounded-3xl bg-white p-5 transition-transform hover:-translate-x-0.5 hover:-translate-y-0.5 dark:bg-slate-900"
+                        style={{ animationDelay: `${Math.min(index, 8) * 45}ms` }}
+                        className="topic-card card-enter neo-box group flex flex-col justify-between rounded-3xl bg-white p-5 transition-transform hover:-translate-x-0.5 hover:-translate-y-0.5 dark:bg-slate-900"
                       >
                         <div>
                           <div className="flex items-start justify-between gap-2">
@@ -371,17 +383,15 @@ export default function AnalysisPage() {
                               value={topic.solved}
                               max={topic.total}
                               className={
-                                isWeak
-                                  ? 'bg-rose-400'
-                                  : isMid
-                                    ? 'bg-amber-400'
-                                    : 'bg-emerald-400'
+                                isWeak ? 'bg-rose-400' : isMid ? 'bg-amber-400' : 'bg-emerald-400'
                               }
                             />
                           </div>
 
                           <div className="mt-2.5 flex items-center justify-between text-[11px] font-bold text-slate-500 dark:text-slate-400">
-                            <span>{topic.solved} of {topic.total} solved</span>
+                            <span>
+                              {topic.solved} of {topic.total} solved
+                            </span>
                             <span>{topic.total - topic.solved} left</span>
                           </div>
                         </div>
@@ -412,7 +422,7 @@ export default function AnalysisPage() {
 
             {/* Tab 2: Difficulty & 390 Core Curriculum */}
             {activeTab === 'curriculum' && (
-              <div className="grid gap-6 lg:grid-cols-2">
+              <div className="tab-enter grid gap-6 lg:grid-cols-2">
                 {/* Difficulty breakdown */}
                 <div className="neo-box-lg rounded-3xl bg-white p-6 dark:bg-slate-900">
                   <div className="flex items-center justify-between border-b-2 border-slate-900 pb-4 dark:border-slate-100">
@@ -437,7 +447,9 @@ export default function AnalysisPage() {
                           <span className="font-black text-slate-950 dark:text-white">
                             {analysis.easySolved}
                           </span>
-                          <span className="ml-1.5 text-xs text-slate-500">({pctOf(analysis.easySolved, analysis.totalSolved)}%)</span>
+                          <span className="ml-1.5 text-xs text-slate-500">
+                            ({pctOf(analysis.easySolved, analysis.totalSolved)}%)
+                          </span>
                         </div>
                       </div>
                       <ProgressBar
@@ -458,7 +470,9 @@ export default function AnalysisPage() {
                           <span className="font-black text-slate-950 dark:text-white">
                             {analysis.mediumSolved}
                           </span>
-                          <span className="ml-1.5 text-xs text-slate-500">({pctOf(analysis.mediumSolved, analysis.totalSolved)}%)</span>
+                          <span className="ml-1.5 text-xs text-slate-500">
+                            ({pctOf(analysis.mediumSolved, analysis.totalSolved)}%)
+                          </span>
                         </div>
                       </div>
                       <ProgressBar
@@ -479,7 +493,9 @@ export default function AnalysisPage() {
                           <span className="font-black text-slate-950 dark:text-white">
                             {analysis.hardSolved}
                           </span>
-                          <span className="ml-1.5 text-xs text-slate-500">({pctOf(analysis.hardSolved, analysis.totalSolved)}%)</span>
+                          <span className="ml-1.5 text-xs text-slate-500">
+                            ({pctOf(analysis.hardSolved, analysis.totalSolved)}%)
+                          </span>
                         </div>
                       </div>
                       <ProgressBar
@@ -491,10 +507,7 @@ export default function AnalysisPage() {
                   </div>
 
                   <div className="neo-box-sm mt-5 rounded-2xl bg-[#E2F952] p-4 text-xs font-bold text-slate-950">
-                    <span className="font-black">Coaching Diagnosis:</span>{' '}
-                    {pctOf(analysis.hardSolved, analysis.totalSolved) < 10
-                      ? 'Hard problems make up under 10% of solves. Target higher-tier FAANG interviews by elevating Medium & Hard practice.'
-                      : 'Excellent difficulty mix! Keep pushing on dynamic programming and graph hard problems.'}
+                    <span className="font-black">Coaching Diagnosis:</span> {analysis.insights[1]}
                   </div>
                 </div>
 
@@ -511,7 +524,8 @@ export default function AnalysisPage() {
                   </div>
 
                   <p className="mt-4 text-xs font-medium text-slate-600 dark:text-slate-400">
-                    Calculated against the 390 core interview problems (Blind 75 + NeetCode 150 + FAANG essentials).
+                    Calculated against the 390 core interview problems (Blind 75 + NeetCode 150 +
+                    FAANG essentials).
                   </p>
 
                   <div className="mt-6 flex items-center gap-5">
@@ -520,9 +534,7 @@ export default function AnalysisPage() {
                         <span className="font-display text-3xl font-black">
                           {Math.round((analysis.datasetSolved / PROBLEMS.length) * 100)}%
                         </span>
-                        <p className="text-[10px] font-black uppercase tracking-wider">
-                          Coverage
-                        </p>
+                        <p className="text-[10px] font-black uppercase tracking-wider">Coverage</p>
                       </div>
                     </div>
 
@@ -564,14 +576,15 @@ export default function AnalysisPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <h2 className="font-display text-lg font-black text-slate-950 dark:text-white">
-                      AI Diagnostic & Coaching Notes
+                      Practice Notes
                     </h2>
                     <p className="text-xs font-medium text-slate-600 dark:text-slate-400">
-                      Actionable intelligence derived from your historical LeetCode submission patterns.
+                      Actionable intelligence derived from your historical LeetCode submission
+                      patterns.
                     </p>
                   </div>
                   <span className="neo-box-sm inline-flex items-center gap-1.5 rounded-full bg-[#E2F952] px-3 py-1 text-xs font-black text-slate-950">
-                    <Bot className="h-3.5 w-3.5" /> Rule-based AI Engine
+                    <Bot className="h-3.5 w-3.5" /> Rule-based practice advice
                   </span>
                 </div>
 
@@ -604,7 +617,6 @@ export default function AnalysisPage() {
               </div>
             )}
 
-
             {/* Tab 5: Recent Activity Feed */}
             {activeTab === 'activity' && (
               <div className="neo-box-lg rounded-3xl bg-white p-6 dark:bg-slate-900">
@@ -625,8 +637,8 @@ export default function AnalysisPage() {
                       className="flex items-center justify-between py-3 transition hover:bg-slate-50 dark:hover:bg-slate-800/40"
                     >
                       <div className="flex min-w-0 items-center gap-3">
-                        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl border border-slate-900 bg-emerald-400 text-slate-950 shadow-[1px_1px_0px_0px_#0f172a]">
-                          <CheckCircle2 className="h-4 w-4" />
+                        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl border border-slate-900 bg-slate-100 text-slate-950 shadow-[1px_1px_0px_0px_#0f172a]">
+                          <Clock className="h-4 w-4" />
                         </span>
                         <div className="min-w-0">
                           <a

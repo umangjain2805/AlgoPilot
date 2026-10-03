@@ -1,8 +1,8 @@
+import { AnimatePresence } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import {
   BookOpen,
   Brain,
-  CheckCircle2,
   ChevronRight,
   Filter,
   Layers,
@@ -11,11 +11,12 @@ import {
   Search,
   Sliders,
   Sparkles,
-  Target,
 } from 'lucide-react'
 import { useLeetCode } from '../hooks/useLeetCode.js'
 import DashboardLayout from '../layouts/DashboardLayout.jsx'
 import QuestionCard from '../components/QuestionCard.jsx'
+import PracticeTools from '../components/PracticeTools.jsx'
+import FocusVisual from '../components/FocusVisual.jsx'
 
 export default function Dashboard() {
   const {
@@ -32,34 +33,37 @@ export default function Dashboard() {
     analysis,
     plan,
     handleSubmit,
+    mode,
+    setMode,
   } = useLeetCode()
 
   return (
     <DashboardLayout>
       <div className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
         {/* Hero & Profile URL Input Bar */}
-        <section className="neo-box-lg relative overflow-hidden rounded-3xl bg-white p-6 sm:p-8 dark:bg-slate-900">
-          <div className="max-w-3xl">
+        <section className="hero-panel neo-box-lg relative overflow-hidden rounded-3xl bg-white p-6 sm:p-8 dark:bg-slate-900">
+          <FocusVisual />
+          <div className="relative z-10 max-w-3xl lg:max-w-[65%]">
             <div className="neo-box-sm inline-flex items-center gap-1.5 rounded-full bg-[#E2F952] px-3 py-1 text-xs font-black text-slate-950">
               <Sparkles className="h-3.5 w-3.5" />
-              <span>Neo-Modern DSA Interview Intelligence</span>
+              <span>Focused LeetCode Interview Practice</span>
             </div>
 
-            <h1 className="font-display mt-4 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl dark:text-white">
-              Target Your LeetCode Weak Spots with{' '}
+            <h1 className="font-display mt-5 text-3xl font-black leading-tight tracking-tight text-slate-950 sm:text-4xl lg:text-[2.7rem] dark:text-white">
+              A little practice. <br />A lot of progress with{' '}
               <span className="rounded-xl bg-[#E2F952] px-2 py-0.5 text-slate-950 dark:text-slate-950">
-                AI Coaching
+                Personalized Practice
               </span>
             </h1>
 
             <p className="mt-2 text-xs font-medium text-slate-600 sm:text-sm dark:text-slate-400">
-              Paste your LeetCode profile handle or URL. We uncover your algorithmic blind spots,
-              track curriculum progress, and build a custom spaced-repetition plan.
+              Paste your LeetCode profile handle or URL. Explore your recorded topic coverage, track
+              recorded solves, and build a focused practice plan.
             </p>
           </div>
 
           {/* Search Form */}
-          <form onSubmit={handleSubmit} className="mt-6">
+          <form onSubmit={handleSubmit} className="relative z-10 mt-7">
             <div className="flex flex-col gap-3 sm:flex-row">
               <div className="relative flex-1">
                 <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" />
@@ -77,12 +81,23 @@ export default function Dashboard() {
                 disabled={loading}
                 className="neo-btn neo-btn-electric inline-flex h-13 items-center justify-center gap-2 rounded-2xl px-7 text-sm font-black disabled:opacity-60"
               >
-                {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Search className="h-5 w-5" />}
+                {loading ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <Search className="h-5 w-5" />
+                )}
                 {loading ? 'Analyzing…' : 'Fetch & Analyze'}
               </button>
             </div>
 
-
+            {loading && (
+              <div className="fetch-progress mt-4" role="status">
+                <span className="loading-track">
+                  <span />
+                </span>
+                <span>Finding your stats and preparing your practice plan...</span>
+              </div>
+            )}
             {error && (
               <div className="neo-box-sm mt-4 rounded-xl bg-rose-200 p-3 text-xs font-bold text-slate-950">
                 {error}
@@ -98,11 +113,11 @@ export default function Dashboard() {
               <Sparkles className="h-7 w-7" />
             </div>
             <h2 className="font-display mt-4 text-xl font-black text-slate-950 dark:text-white">
-              No Profile Loaded Yet
+              Your next chapter starts here
             </h2>
             <p className="mx-auto mt-2 max-w-md text-xs font-medium text-slate-600 dark:text-slate-400">
-              Paste your LeetCode username above to view your complete Neo-Brutalist diagnostic cards,
-              curriculum heatmap, and custom question planner.
+              Connect your LeetCode profile to find your next question, build a daily habit, and see
+              your progress grow.
             </p>
           </div>
         )}
@@ -110,6 +125,7 @@ export default function Dashboard() {
         {/* Loaded Profile Content */}
         {analysis && (
           <>
+            <PracticeTools />
             {/* AI Deep Analysis Quick Callout Banner */}
             <section className="neo-box-lg relative overflow-hidden rounded-3xl bg-[#E2F952] p-6 text-slate-950 sm:p-7">
               <div className="relative z-10 flex flex-col items-start justify-between gap-4 lg:flex-row lg:items-center">
@@ -120,7 +136,7 @@ export default function Dashboard() {
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="rounded-full border border-slate-900 bg-white px-2.5 py-0.5 text-xs font-black uppercase tracking-wide text-slate-950 shadow-[1px_1px_0px_0px_#0f172a]">
-                        AI Diagnostic Ready
+                        Practice Analysis Ready
                       </span>
                       {analysis.weakTopics?.length > 0 && (
                         <span className="text-xs font-bold text-slate-800">
@@ -130,11 +146,14 @@ export default function Dashboard() {
                     </div>
                     <h2 className="font-display mt-1 text-xl font-black">
                       {analysis.weakTopics?.length > 0
-                        ? `Skill gaps detected in ${analysis.weakTopics.slice(0, 3).map((t) => t.name).join(', ')}`
-                        : 'Your complete algorithmic profile is fully mapped!'}
+                        ? `Lower recorded coverage in ${analysis.weakTopics
+                            .slice(0, 3)
+                            .map((t) => t.name)
+                            .join(', ')}`
+                        : 'Your recorded curriculum is ready to explore.'}
                     </h2>
                     <p className="mt-1 text-xs font-medium text-slate-800">
-                      Explore interactive difficulty cards, topic mastery gaps, and coaching advice.
+                      Explore difficulty statistics, recorded topic coverage, and practice advice.
                     </p>
                   </div>
                 </div>
@@ -143,7 +162,7 @@ export default function Dashboard() {
                   to="/analysis"
                   className="neo-btn inline-flex shrink-0 items-center gap-2 rounded-2xl bg-white px-6 py-3 text-xs font-black text-slate-950"
                 >
-                  <span>Open Full AI Analysis</span>
+                  <span>Open Practice Analysis</span>
                   <ChevronRight className="h-4 w-4" />
                 </Link>
               </div>
@@ -165,7 +184,8 @@ export default function Dashboard() {
                     </h2>
                   </div>
                   <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                    Choose your topic, target question count, and difficulty to generate an optimized training session.
+                    Choose your topic, target question count, and difficulty to generate an
+                    optimized training session.
                   </p>
                 </div>
 
@@ -182,6 +202,22 @@ export default function Dashboard() {
                 </div>
               </div>
 
+              <div className="mb-5 flex flex-wrap gap-2" role="group" aria-label="Practice mode">
+                {[
+                  ['new', 'New questions only'],
+                  ['revision', 'Due revision'],
+                ].map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    aria-pressed={mode === value}
+                    onClick={() => setMode(value)}
+                    className={`rounded-xl border-2 px-4 py-2 text-sm font-bold ${mode === value ? 'border-slate-900 bg-[#E2F952] text-slate-950' : 'border-slate-200 text-slate-600 dark:border-slate-700 dark:text-slate-300'}`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
               {/* Session Customizer Controls Grid */}
               <div className="rounded-2xl border border-slate-200/80 bg-slate-50/70 p-5 space-y-6 dark:border-slate-800/80 dark:bg-slate-800/40">
                 <div className="grid gap-6 md:grid-cols-2">
@@ -209,12 +245,13 @@ export default function Dashboard() {
                       onChange={(e) => setSelectedTopic(e.target.value)}
                       className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-800 shadow-xs focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                     >
-                      <option value="all">🌟 All Topics (AI Weakness Priority)</option>
+                      <option value="all">🌟 All Topics (Coverage Priority)</option>
                       {analysis?.weakTopics?.length > 0 && (
                         <optgroup label="⚠️ Identified Weak Topics (Recommended)">
                           {analysis.weakTopics.map((topic) => (
                             <option key={topic.name} value={topic.name}>
-                              {topic.name} ({Math.round(topic.ratio * 100)}% solved — {topic.solved}/{topic.total})
+                              {topic.name} ({Math.round(topic.ratio * 100)}% solved — {topic.solved}
+                              /{topic.total})
                             </option>
                           ))}
                         </optgroup>
@@ -225,8 +262,7 @@ export default function Dashboard() {
                           .sort((a, b) => a.name.localeCompare(b.name))
                           .filter(
                             (t) =>
-                              t.hasCurated &&
-                              !analysis.weakTopics?.some((w) => w.name === t.name),
+                              t.hasCurated && !analysis.weakTopics?.some((w) => w.name === t.name),
                           )
                           .map((topic) => (
                             <option key={topic.name} value={topic.name}>
@@ -356,9 +392,7 @@ export default function Dashboard() {
                     <strong className="text-slate-800 dark:text-slate-200">
                       {selectedTopic === 'all' ? 'All Topics' : selectedTopic}
                     </strong>
-                    {selectedDifficulty !== 'all' && (
-                      <span> · {selectedDifficulty}</span>
-                    )}
+                    {selectedDifficulty !== 'all' && <span> · {selectedDifficulty}</span>}
                     {plan?.totalAvailable !== undefined && (
                       <span className="ml-1.5 text-slate-400">
                         ({plan.totalAvailable} matching problems available)
@@ -368,78 +402,41 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              {/* Question list split */}
-              {plan && (plan.revision.length > 0 || plan.fresh.length > 0) ? (
-                <div className="mt-8 grid gap-6 lg:grid-cols-2">
-                  {/* Revision */}
-                  <div>
-                    <div className="mb-3 flex items-center justify-between">
-                      <h3 className="flex items-center gap-2 text-sm font-bold text-slate-800 dark:text-slate-200">
-                        <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                        Revision Set (Reinforce Concepts)
-                      </h3>
-                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-500 dark:bg-slate-800 dark:text-slate-400">
-                        {plan?.revision?.length || 0}
-                      </span>
-                    </div>
-
-                    <div className="space-y-3">
-                      {plan?.revision?.length ? (
-                        plan.revision.map((p, i) => (
-                          <QuestionCard key={p.titleSlug} problem={p} solved index={i} />
-                        ))
-                      ) : (
-                        <p className="rounded-2xl border border-dashed border-slate-300 p-5 text-center text-sm text-slate-500 dark:border-slate-800">
-                          No solved questions available in {selectedTopic === 'all' ? 'the dataset' : selectedTopic} for revision yet.
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Fresh */}
-                  <div>
-                    <div className="mb-3 flex items-center justify-between">
-                      <h3 className="flex items-center gap-2 text-sm font-bold text-slate-800 dark:text-slate-200">
-                        <Sparkles className="h-4 w-4 text-sky-500" />
-                        New Challenges (Expand Horizons)
-                      </h3>
-                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-500 dark:bg-slate-800 dark:text-slate-400">
-                        {plan?.fresh?.length || 0}
-                      </span>
-                    </div>
-
-                    <div className="space-y-3">
-                      {plan?.fresh?.length ? (
-                        plan.fresh.map((p, i) => (
-                          <QuestionCard key={p.titleSlug} problem={p} solved={false} index={i} />
-                        ))
-                      ) : (
-                        <p className="rounded-2xl border border-dashed border-slate-300 p-5 text-center text-sm text-slate-500 dark:border-slate-800">
-                          No unsolved problems left in {selectedTopic === 'all' ? 'the dataset' : selectedTopic} matching this filter.
-                        </p>
-                      )}
-                    </div>
-                  </div>
+              <div className="mt-6">
+                <h3 className="mb-3 text-sm font-bold text-slate-800 dark:text-slate-200">
+                  {mode === 'revision' ? 'Due revision questions' : 'Suggested new practice'}
+                </h3>
+                <div className="question-grid grid gap-4 md:grid-cols-2">
+                  <AnimatePresence initial={false} mode="sync">
+                    {(mode === 'revision' ? plan?.revision : plan?.fresh)?.map((p, i) => (
+                      <QuestionCard
+                        key={p.titleSlug}
+                        problem={p}
+                        solved={mode === 'revision'}
+                        index={i}
+                      />
+                    ))}
+                  </AnimatePresence>
                 </div>
-              ) : (
-                <div className="mt-8 rounded-2xl border border-dashed border-slate-300 p-8 text-center dark:border-slate-800">
-                  <Target className="mx-auto h-8 w-8 text-slate-400" />
-                  <p className="mt-2 text-sm font-medium text-slate-600 dark:text-slate-300">
-                    No problems found matching this specific topic & difficulty combination.
+                {!plan?.totalAvailable && (
+                  <p className="rounded-2xl border border-dashed border-slate-300 p-6 text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
+                    {mode === 'revision'
+                      ? 'No reviews are due for these filters. Try another topic or return after your next scheduled review.'
+                      : 'No eligible questions match these filters. Change the topic or difficulty, or restore skipped questions.'}
                   </p>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedTopic('all')
-                      setSelectedDifficulty('all')
-                    }}
-                    className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-700 hover:bg-indigo-100 dark:bg-indigo-500/10 dark:text-indigo-300"
-                  >
-                    <RotateCcw className="h-3.5 w-3.5" />
-                    Reset filters to default
-                  </button>
-                </div>
-              )}
+                )}
+                {mode === 'revision' && plan?.upcomingReviews > 0 && (
+                  <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
+                    {plan.upcomingReviews} questions are scheduled for a later review. Reviews use
+                    intervals of 1, 3, 7, 14 and 30 days.
+                  </p>
+                )}
+                {plan?.totalAvailable > 0 && plan.totalAvailable < total && (
+                  <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
+                    Only {plan.totalAvailable} eligible questions remain for these filters.
+                  </p>
+                )}
+              </div>
             </section>
           </>
         )}

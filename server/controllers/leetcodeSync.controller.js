@@ -1,28 +1,27 @@
 import { ApiResponse } from '../utils/ApiResponse.js'
 import { ApiError } from '../utils/ApiError.js'
 import { asyncHandler } from '../utils/asyncHandler.js'
-import { syncUserSolvedProblems } from '../services/leetcodeSync.service.js'
+import { fetchLeetCodeProfile, validateUsername } from '../services/leetcode/leetcodeService.js'
 
 /**
- * @desc    Synchronize user's solved LeetCode problem numbers into MongoDB
+ * @desc    Read-only public profile sync; session cookies and database writes are not supported
  * @route   POST /sync-leetcode
- * @access  Public / Authenticated
+ * @access  Public
  */
 export const syncLeetcode = asyncHandler(async (req, res) => {
-  const { username, sessionCookie } = req.body
-
-  if (!username || typeof username !== 'string' || !username.trim()) {
-    throw new ApiError(400, 'Username is required and must be a valid string')
+  if (Object.hasOwn(req.body || {}, 'sessionCookie')) {
+    throw new ApiError(
+      400,
+      'Session cookies are not accepted. Use public profile sync or import solved question IDs in the dashboard.',
+    )
   }
-
-  // Trigger synchronization service
-  const result = await syncUserSolvedProblems(username, { sessionCookie })
-
-  // Return formatted response with total solved count
+  const username = validateUsername(req.body?.username)
+  const profile = await fetchLeetCodeProfile(username)
   return res.status(200).json(
-    new ApiResponse(200, 'LeetCode solved problems synchronized successfully', {
-      username: result.userId,
-      totalSolvedCount: result.totalSolvedCount,
+    new ApiResponse(200, 'Public profile synchronized. Solved history may be partial.', {
+      username: profile.leetcodeUsername,
+      totalSolvedCount: profile.totalSolved,
+      profile,
     }),
   )
 })

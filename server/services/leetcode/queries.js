@@ -104,25 +104,3 @@ export const SKILL_STATS_QUERY = `
     }
   }
 `
-
-// Paginated listing of the full problem catalog (all difficulty levels and
-// topics, free and paid). Used to map a user's solved slugs onto topic tags so
-// coverage is measured against every LeetCode problem they've actually solved.
-export const PROBLEM_LIST_QUERY = `
-  query problemsetQuestionList($categorySlug: String, $limit: Int, $skip: Int, $filters: QuestionListFilterInput) {
-    problemsetQuestionList: questionList(categorySlug: $categorySlug, limit: $limit, skip: $skip, filters: $filters) {
-      total: totalNum
-      questions: data {
-        questionFrontendId
-        title
-        titleSlug
-        difficulty
-        isPaidOnly
-        topicTags {
-          name
-          slug
-        }
-      }
-    }
-  }
-`

@@ -1,0 +1,10 @@
+{
+  "name": "leetcode-practice-coach",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "build": "npm --prefix client run build"
+  }
+}

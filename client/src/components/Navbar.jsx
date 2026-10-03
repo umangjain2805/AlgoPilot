@@ -1,19 +1,15 @@
+import { useContext } from 'react'
+import { ThemeContext } from '../context/themeContext.js'
 import { NavLink, Link } from 'react-router-dom'
-import {
-  Bot,
-  Brain,
-  LayoutDashboard,
-  Loader2,
-  RefreshCw,
-  UserX,
-} from 'lucide-react'
+import { Moon, Sun, Bot, Brain, LayoutDashboard, Loader2, RefreshCw, UserX } from 'lucide-react'
 import { useLeetCode } from '../hooks/useLeetCode.js'
 
 export default function Navbar() {
+  const theme = useContext(ThemeContext)
   const { profile, analysis, loading, sync, reset } = useLeetCode()
 
   return (
-    <header className="sticky top-0 z-40 border-b-2 border-slate-900 bg-white/95 backdrop-blur-md dark:border-slate-100 dark:bg-[#121316]/95">
+    <header className="nav-shell sticky top-0 z-40 border-b-2 border-slate-900 bg-white/95 backdrop-blur-md dark:border-slate-100 dark:bg-[#121316]/95">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
         {/* Brand */}
         <div className="flex min-w-0 items-center gap-6">
@@ -23,7 +19,10 @@ export default function Navbar() {
             </span>
             <div className="flex min-w-0 flex-col">
               <span className="truncate font-display text-base font-black tracking-tight text-slate-950 dark:text-white">
-                LeetCode <span className="rounded-md bg-[#E2F952] px-1.5 py-0.5 text-slate-950 dark:text-slate-950">AI Coach</span>
+                LeetCode{' '}
+                <span className="rounded-md bg-[#E2F952] px-1.5 py-0.5 text-slate-950 dark:text-slate-950">
+                  AI Coach
+                </span>
               </span>
               <span className="hidden text-[10px] font-bold text-slate-500 sm:inline dark:text-slate-400">
                 Neo-Modern Interview Prep
@@ -71,6 +70,21 @@ export default function Navbar() {
 
         {/* Right Action Bar */}
         <div className="flex shrink-0 items-center gap-2.5 sm:gap-3">
+          {theme && (
+            <button
+              type="button"
+              onClick={theme.toggleTheme}
+              aria-label={theme.dark ? 'Switch to light theme' : 'Switch to dark theme'}
+              title={theme.dark ? 'Light theme' : 'Dark theme'}
+              className="theme-toggle grid h-9 w-9 place-items-center rounded-xl border-2 border-slate-900 bg-white text-slate-700 dark:border-slate-200 dark:bg-slate-900 dark:text-slate-200"
+            >
+              {theme.dark ? (
+                <Sun key="sun" className="h-4 w-4" />
+              ) : (
+                <Moon key="moon" className="h-4 w-4" />
+              )}
+            </button>
+          )}
           {profile ? (
             <div className="neo-box-sm flex items-center gap-2 rounded-2xl bg-white p-1 pl-2.5 sm:gap-3 dark:bg-slate-900">
               {/* Profile identity */}
@@ -122,7 +136,6 @@ export default function Navbar() {
               </button>
             </div>
           ) : null}
-
         </div>
       </div>
 

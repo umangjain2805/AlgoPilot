@@ -36,7 +36,12 @@ export const normalizeProfile = ({ matchedUser, contestRanking, recentSubmission
   const easySolved = getCount(acSubmissionNum, 'Easy')
   const mediumSolved = getCount(acSubmissionNum, 'Medium')
   const hardSolved = getCount(acSubmissionNum, 'Hard')
-  const totalSubmissions = getCount(totalSubmissionNum, 'All')
+  const totalSubmissions = totalSubmissionNum.find(
+    (item) => item?.difficulty === 'All',
+  )?.submissions
+  const acceptedSubmissions = acSubmissionNum.find(
+    (item) => item?.difficulty === 'All',
+  )?.submissions
 
   return {
     leetcodeUsername: matchedUser?.username || '',
@@ -54,7 +59,12 @@ export const normalizeProfile = ({ matchedUser, contestRanking, recentSubmission
     mediumSolved,
     hardSolved,
     totalSolved,
-    acceptanceRate: totalSubmissions ? round((totalSolved / totalSubmissions) * 100) : 0,
+    acceptanceRate:
+      Number.isFinite(acceptedSubmissions) &&
+      Number.isFinite(totalSubmissions) &&
+      totalSubmissions > 0
+        ? round(Math.min(1, acceptedSubmissions / totalSubmissions) * 100)
+        : null,
     contributionPoints: profile.contributionPoints ?? 0,
     heatmap: parseHeatmap(calendar.submissionCalendar),
     calendar: {
@@ -84,57 +94,3 @@ export const normalizeProfile = ({ matchedUser, contestRanking, recentSubmission
 
 // Dedupes an already-flat slug list.
 export const uniqueSlugs = (slugs = []) => [...new Set(slugs.filter(Boolean))]
-
-// Builds per-topic solved/total coverage for a set of solved slugs against a
-// catalog of problems (each `{ titleSlug, tags }`). Returns topics sorted by
-// coverage ratio ascending (least-practised first), largest topic breaking ties,
-// so the first entries are the "needs more practice" topics.
-export const buildTopicCoverage = (solvedSlugs = [], problems = [], skillStats = null) => {
-  const solvedSet = new Set(solvedSlugs)
-  const topicMap = new Map()
-
-  for (const problem of problems) {
-    for (const tag of problem?.tags || []) {
-      if (!tag) continue
-      if (!topicMap.has(tag)) topicMap.set(tag, { name: tag, total: 0, solved: 0 })
-
-      const entry = topicMap.get(tag)
-      entry.total += 1
-      if (solvedSet.has(problem.titleSlug)) entry.solved += 1
-    }
-  }
-
-  // If skillStats are available directly from LeetCode profile, use them for accurate solved counts
-  if (skillStats) {
-    const allSkillTags = [
-      ...(skillStats.fundamental || []),
-      ...(skillStats.intermediate || []),
-      ...(skillStats.advanced || []),
-    ]
-
-    for (const item of allSkillTags) {
-      if (!item?.tagName) continue
-      const name = item.tagName
-      const solved = Number(item.problemsSolved) || 0
-      if (!topicMap.has(name)) {
-        topicMap.set(name, { name, total: solved, solved })
-      } else {
-        const entry = topicMap.get(name)
-        entry.solved = Math.max(entry.solved, solved)
-        if (entry.total < entry.solved) {
-          entry.total = entry.solved
-        }
-      }
-    }
-  }
-
-  return [...topicMap.values()]
-    .map(({ name, total, solved }) => ({
-      name,
-      total,
-      solved,
-      unsolved: Math.max(0, total - solved),
-      ratio: total ? solved / total : 0,
-    }))
-    .sort((a, b) => a.ratio - b.ratio || b.total - a.total)
-}

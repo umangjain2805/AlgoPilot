@@ -30,8 +30,11 @@ export const errorMiddleware = (err, req, res, _next) => {
     error = new ApiError(401, 'Your session has expired. Please log in again.')
   }
 
-  const statusCode = error.statusCode || 500
-  const message = error.message || 'Internal Server Error'
+  const statusCode = error.statusCode || error.status || 500
+  const message =
+    statusCode === 500 && isProduction
+      ? 'Internal Server Error'
+      : error.message || 'Internal Server Error'
 
   if (statusCode === 500) {
     console.error('Unhandled error:', err)

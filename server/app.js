@@ -30,8 +30,8 @@ app.use(requestLogger)
 
 // ---- Rate limiting ----
 const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  limit: 100,
+  windowMs: env.apiRateWindowMs,
+  limit: env.apiRateLimit,
   standardHeaders: 'draft-7',
   legacyHeaders: false,
   message: {
@@ -55,7 +55,8 @@ app.get('/api/health', (_req, res) => {
 })
 
 // ---- Routes ----
-app.use('/', leetcodeSyncRoutes) // POST /sync-leetcode
+app.use('/sync-leetcode', apiLimiter)
+app.use('/', leetcodeSyncRoutes) // compatibility route: no cookie-based writes
 app.use('/api', leetcodeSyncRoutes) // POST /api/sync-leetcode
 app.use('/api/leetcode', leetcodeRoutes)
 
